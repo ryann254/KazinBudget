@@ -2,11 +2,11 @@ import { Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import { lazy, Suspense } from 'react'
 
-const Design1Safari = lazy(() => import('./designs/design1-safari'))
-const Design2NairobiNights = lazy(() => import('./designs/design2-nairobi-nights'))
-const Design3SavannaClean = lazy(() => import('./designs/design3-savanna-clean'))
-const Design4MaasaiBold = lazy(() => import('./designs/design4-maasai-bold'))
-const Design5MatatuCulture = lazy(() => import('./designs/design5-matatu-culture'))
+const Design1Bauhaus = lazy(() => import('./designs/design1-bauhaus'))
+const Design2Terminal = lazy(() => import('./designs/design2-terminal'))
+const Design3Glass = lazy(() => import('./designs/design3-glass'))
+const Design4Ankara = lazy(() => import('./designs/design4-ankara'))
+const Design5Brutalist = lazy(() => import('./designs/design5-brutalist'))
 
 function LoadingFallback() {
   return (
@@ -24,11 +24,11 @@ function App() {
     <Suspense fallback={<LoadingFallback />}>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/design-1/*" element={<Design1Safari />} />
-        <Route path="/design-2/*" element={<Design2NairobiNights />} />
-        <Route path="/design-3/*" element={<Design3SavannaClean />} />
-        <Route path="/design-4/*" element={<Design4MaasaiBold />} />
-        <Route path="/design-5/*" element={<Design5MatatuCulture />} />
+        <Route path="/design-1/*" element={<Design1Bauhaus />} />
+        <Route path="/design-2/*" element={<Design2Terminal />} />
+        <Route path="/design-3/*" element={<Design3Glass />} />
+        <Route path="/design-4/*" element={<Design4Ankara />} />
+        <Route path="/design-5/*" element={<Design5Brutalist />} />
       </Routes>
     </Suspense>
   )

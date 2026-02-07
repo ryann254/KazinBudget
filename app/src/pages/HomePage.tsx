@@ -4,47 +4,47 @@ const designs = [
   {
     id: 1,
     path: "/design-1",
-    name: "Safari",
-    tagline: "Warm earth tones inspired by Kenya's landscapes",
-    gradient: "from-amber-600 via-orange-700 to-yellow-800",
-    accent: "bg-amber-500",
-    emoji: "🦁",
+    name: "Bauhaus Blueprint",
+    tagline: "Geometric precision with primary color blocking",
+    gradient: "from-red-600 via-blue-700 to-yellow-500",
+    accent: "bg-red-600",
+    emoji: "◼",
   },
   {
     id: 2,
     path: "/design-2",
-    name: "Nairobi Nights",
-    tagline: "Dark urban vibes with neon city accents",
-    gradient: "from-slate-900 via-purple-900 to-cyan-900",
-    accent: "bg-cyan-400",
-    emoji: "🌃",
+    name: "Terminal Green",
+    tagline: "Hacker-style retro terminal with phosphor glow",
+    gradient: "from-gray-950 via-green-950 to-gray-950",
+    accent: "bg-green-400",
+    emoji: "▶",
   },
   {
     id: 3,
     path: "/design-3",
-    name: "Savanna Clean",
-    tagline: "Ultra-minimalist with muted sage & sand",
-    gradient: "from-stone-200 via-emerald-100 to-amber-50",
-    accent: "bg-emerald-500",
-    emoji: "🌿",
+    name: "Glassmorphism Luxe",
+    tagline: "Premium frosted glass with floating translucent layers",
+    gradient: "from-violet-950 via-indigo-900 to-slate-900",
+    accent: "bg-violet-400",
+    emoji: "◆",
   },
   {
     id: 4,
     path: "/design-4",
-    name: "Maasai Bold",
-    tagline: "Vibrant reds & blues with geometric patterns",
-    gradient: "from-red-700 via-blue-800 to-orange-600",
-    accent: "bg-red-600",
-    emoji: "🔺",
+    name: "Ankara Heritage",
+    tagline: "Warm African textile patterns with artisanal warmth",
+    gradient: "from-amber-800 via-red-800 to-teal-900",
+    accent: "bg-amber-600",
+    emoji: "▲",
   },
   {
     id: 5,
     path: "/design-5",
-    name: "Matatu Culture",
-    tagline: "Colorful, playful, inspired by Nairobi's iconic matatus",
-    gradient: "from-fuchsia-600 via-yellow-500 to-green-500",
-    accent: "bg-fuchsia-500",
-    emoji: "🚐",
+    name: "Neo-Brutalist",
+    tagline: "Raw anti-design with thick borders and offset shadows",
+    gradient: "from-yellow-400 via-pink-400 to-blue-400",
+    accent: "bg-yellow-400",
+    emoji: "★",
   },
 ]
 
@@ -80,7 +80,7 @@ export default function HomePage() {
             >
               {/* Card gradient background */}
               <div className={`h-48 bg-gradient-to-br ${design.gradient} flex items-center justify-center`}>
-                <span className="text-7xl group-hover:scale-110 transition-transform duration-300">
+                <span className="text-7xl group-hover:scale-110 transition-transform duration-300 opacity-80">
                   {design.emoji}
                 </span>
               </div>
