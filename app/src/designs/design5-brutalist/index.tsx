@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
@@ -11,7 +10,7 @@ import {
   rentDetails, foodDetails, formatKES, growthAssumptions
 } from '../../data/dummy'
 import {
-  Home, User, BarChart3, TrendingUp, Users, ArrowLeft,
+  Home, User, BarChart3, TrendingUp, Users,
   Zap, Star, AlertTriangle, ThumbsUp, ChevronRight
 } from 'lucide-react'
 
@@ -50,7 +49,6 @@ const brutalistCardHover = {
 
 export default function Design5Brutalist() {
   const [activeTab, setActiveTab] = useState<TabKey>('input')
-  const navigate = useNavigate()
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [showNavScroll, setShowNavScroll] = useState(true)
 
@@ -930,34 +928,12 @@ export default function Design5Brutalist() {
         style={{ backgroundColor: COLORS.black, borderBottom: `4px solid ${COLORS.red}` }}
       >
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="px-3 py-2 font-extrabold text-xs uppercase flex items-center gap-2"
-              style={{
-                border: `3px solid ${COLORS.yellow}`, color: COLORS.yellow,
-                backgroundColor: 'transparent', fontFamily: "'Work Sans', sans-serif",
-                letterSpacing: '0.15em',
-                boxShadow: `3px 3px 0 ${COLORS.yellow}`, cursor: 'pointer',
-              }}
-              onMouseDown={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = `1px 1px 0 ${COLORS.yellow}`;
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translate(2px, 2px)';
-              }}
-              onMouseUp={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = `3px 3px 0 ${COLORS.yellow}`;
-                (e.currentTarget as HTMLButtonElement).style.transform = 'none';
-              }}
-            >
-              <ArrowLeft size={14} /> GO BACK
-            </button>
-            <h1
-              className="text-xl md:text-2xl font-black tracking-tight hidden sm:block"
-              style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.white }}
-            >
-              KAZI<span style={{ color: COLORS.red }}>&amp;BUDGET</span>
-            </h1>
-          </div>
+          <h1
+            className="text-xl md:text-2xl font-black tracking-tight"
+            style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.white }}
+          >
+            KAZI<span style={{ color: COLORS.red }}>&amp;BUDGET</span>
+          </h1>
 
           {/* User Badge */}
           <div
