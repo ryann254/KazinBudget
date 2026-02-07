@@ -18,6 +18,6 @@ Use `@AGENTS.md` to learn:
 
 Review `@SKILL.md` before making design changes.
 
-
+I really like design 1 and design 5, let's find a way to combine the boldness of design 5, the tilted buttons, bold text, but let's reduce the number of colors used. Combine this with the professionalism of design 1. Design 5 should our base let's build on it using design 1 and the design from the screenshot provided.
 
 <!-- OPENSPEC:END -->
