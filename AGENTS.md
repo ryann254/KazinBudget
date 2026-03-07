@@ -1,233 +1,250 @@
-# AGENTS.md - Autonomous Agent Commands
+# AGENTS.md
 
-Token-efficient commands. Output failures only.
-User preferences and explicit requests come first.
+## 1. Purpose
 
-## Required Skills
+This file defines the mandatory execution harness for all agents in this repository.
 
-| Situation | Skill | Trigger |
-|-----------|-------|---------|
-| Claiming "done", "fixed", "passes" | `/verification-before-completion` | Evidence before claims |
-| Bug found, need to fix | `/systematic-debugging` | Root cause first, no guessing |
-| Adding new feature/function | `/test-driven-development` | Failing test first |
-| Before commit/PR | `/requesting-code-review` | Self-review catches issues |
-| Receiving code feedback | `/receiving-code-review` | Technical rigor, not blind acceptance |
+The harness applies to every task type: read-only, advisory, planning, docs-only, config, and code changes.
 
-## Technology Skills
+No task is exempt.
 
-| Stack | Skill |
-|-------|-------|
-| React + Vite |
-| Convex |
-| TanStack Router | `/tanstack-router` |
-| Forms + Zod | `/react-hook-form-zod` |
-| Tailwind + shadcn | `/tailwind-v4-shadcn` |
-| shadcn components | `/shadcn-ui` |
-| React patterns | `/vercel-react-best-practices` |
-| E2E tests | `/e2e-testing-patterns` |
-| Browser automation | `/agent-browser` |
-| TypeScript | `/typescript-advanced-types` |
-| UI/UX audit | `/web-design-guidelines` |
+This repository is an actively evolving scaffold. Do not add legacy aliases, backward-compatibility shims, fallback keys, or dual-contract behavior unless a scoped human break-glass override is recorded.
 
-## Verification Commands
+Always use this file when the request:
+- Mentions planning or proposals (words like proposal, spec, change, plan)
+- Introduces new capabilities, breaking changes, architecture shifts, or big performance/security work
+- Sounds ambiguous and you need the authoritative spec before coding
+
+Use this file to learn:
+- How to create and apply change proposals
+- Spec format and conventions
+- Project structure and guidelines
+
+Review `@SKILL.md` and `@openspec/design-doc/design.md` before making design changes.
+
+Refer to the openspec/ folder, use subagents to research the .md files to see the work that needs to be done. Once satisfied, launch subagents to implement the tasks in the tasks.md for each folder, each subagent will do one task in the tasks.md file, then when done, mark that task as complete, kill the subagent then spawn a new one for the next task
+
+
+## 2. Precedence
+
+Follow instructions in this order:
+
+1. `AGENTS.md` (authoritative contract)
+2. Explicit, scoped human break-glass override recorded in `docs/IMPLEMENTATION_STATE.md`
+3. `openspec/project.md` and relevant feature docs under `openspec/**/design.md` + `openspec/**/tasks.md`
+4. `CLAUDE.md` (operational pointer; lower precedence than this file)
+
+If instructions conflict, follow the highest-precedence source unless a valid break-glass entry exists.
+
+## 3. Mandatory Sources
+
+For each task, the agent must consult all applicable sources:
+
+1. `AGENTS.md`
+2. `openspec/project.md`
+3. Relevant `openspec/<feature>/design.md`
+4. Relevant `openspec/<feature>/tasks.md`
+5. For Convex work: `convex/**` source files and generated contract in `web/.env.local`
+
+## 4. Task Unit, Sequencing, and Progression
+
+1. Only one task may be active at a time.
+2. If a milestone ID exists in OpenSpec tasks, use it.
+3. If no milestone ID exists, create sequential task IDs: `T001`, `T002`, `T003`, ...
+4. Before implementation, add a task-start entry to `docs/IMPLEMENTATION_STATE.md` (create file if missing).
+5. Complete all applicable verification gates for the current task.
+6. If all required gates pass, record agent self-approval in `docs/IMPLEMENTATION_STATE.md`.
+7. Commit only after verification passes and approval is recorded.
+8. Start the next task only after the current task is completed and logged.
+9. Human review is optional unless explicitly requested.
+10. If task work is not represented in OpenSpec tasks, add/patch OpenSpec task entries before implementation.
+
+## 5. `docs/IMPLEMENTATION_STATE.md` Required Schema
+
+Every state update must use this exact field order:
+
+1. `Timestamp` (ISO-8601)
+2. `Task ID`
+3. `Phase` (`intake`, `implementation`, `verification`, `handoff`, `approval`, `commit`, `blocked`)
+4. `Summary`
+5. `Files Touched` (`none` if read-only)
+6. `Commands Run` (include exit status and key output)
+7. `Verification Matrix` (each gate: `pass`, `fail`, or `na` with reason)
+8. `Evidence` (artifact paths, routes checked, screenshots)
+9. `Approval Record` (agent self-approval or human approval/override)
+10. `Next Step`
+
+Minimum update points:
+
+1. Task start
+2. After each major implementation step
+3. Before verification
+4. After each verification batch
+5. At approval
+6. At commit
+7. At least every 10 minutes during long-running work
+
+## 6. Verification Applicability Matrix
+
+For every task, classify impact and run all required gates. Any skipped gate must be recorded as `na` with explicit reason.
+
+Include `legacy_backcompat_check` for all applicable tasks:
+
+1. `pass`: no legacy aliases/fallbacks/shims introduced
+2. `fail`: any legacy/back-compat artifact introduced in touched scope
+3. `na`: task scope cannot affect runtime/API/config contract; include reason
+
+### 6.1 Docs-Only / Read-Only / Advisory Tasks
+
+1. Runtime and code execution gates may be `na`.
+2. `IMPLEMENTATION_STATE.md` must document explicit `na` reasons.
+
+### 6.2 Code or Config Tasks (Non-Convex)
+
+Run:
+
 ```bash
-# Quick checks (filtered output)
-pnpm typecheck 2>&1 | grep -E "error TS" | head -20 || echo "OK"
-pnpm lint 2>&1 | grep -E "(error|warn)" | head -20 || echo "OK"
-pnpm build 2>&1 | grep -E "(error|Error|failed)" || echo "OK"
-pnpm circular 2>&1 | grep -v "^$" | head -10
-pnpm deadcode 2>&1 | head -20 || echo "OK"
-
-# Full pre-commit (NEVER skip)
-pnpm format && pnpm lint && pnpm typecheck && pnpm circular && pnpm deadcode && pnpm build && \
-pnpm test:unit && pnpm test:e2e && echo "PASS" || echo "FAIL"
+pnpm lint
+pnpm typecheck
+pnpm build
+pnpm test:unit
 ```
 
-## Tests
+### 6.3 Convex-Touching Tasks
+
+A task is Convex-touching if it changes `convex/**`, Convex deployment binding, or backend contract behavior.
+
+Run:
+
 ```bash
-# Unit (all)
-pnpm test:unit --reporter=dot 2>&1 | grep -E "(FAIL|Error|✗)" || echo "OK"
-
-# Unit (by package)
-pnpm test:unit -- packages/api --reporter=dot 2>&1 | grep -E "(FAIL|Error|✗)" || echo "OK"
-pnpm test:unit -- packages/shared --reporter=dot 2>&1 | grep -E "(FAIL|Error|✗)" || echo "OK"
-
-# E2E (NEVER skip)
-pnpm test:e2e --reporter=line 2>&1 | grep -E "(failed|Error|✗)" | head -20
+pnpm lint
+pnpm typecheck
+pnpm test:unit
+cd web && npx convex dev --once
 ```
 
-### Services
-| Service | Port | Description |
-|---------|------|-------------|
-| API | 3210 | Convex server |
-| Web | 5173 | Vite React frontend |
+If the change affects production behavior, also run:
 
-### Quick Start
 ```bash
-# First time setup (install packages, start up frontend and backend)
-pnpm install
-pnpm run dev && pnpm convex dev
-
-# Start all services
-pnpm run dev && pnpm convex dev
-
-# Stop services (keeps containers)
-Control + C
+cd web && npx convex deploy -y
 ```
 
-### Runtime Verification (MANDATORY)
+### 6.4 UI or Live Runtime Tasks
 
-**Before ANY commit, verify services are healthy:**
+A task is UI/live-runtime-touching if it affects `web/**` user-visible behavior.
+
+Run:
 
 ```bash
-# Check all services running
-# API check - make sure the CLI says the instance is "Ready"
-curl -sf http://localhost:3210/ >/dev/null && echo "✓ API OK" || echo "✗ API DOWN"
-
-# Web health check
-curl -sf http://localhost:5173/ >/dev/null && echo "✓ Web OK" || echo "✗ Web DOWN"
-
-### When to Run Runtime Verification
-
-| Changed Files | Action |
-|---------------|--------|
-| `src/**` | ALL runtime checks |
-| `*.md`, `openspec/` | Skip runtime (static checks only) |
-| `*.test.ts`, `e2e/` | Skip runtime (tests are the verification) |
-
-### The Contract
-1. **If API/S is down** → You broke something → Fix it before commit
-2. **If logs show errors** → You introduced a bug → Fix it before commit
-3. **NO EXCUSES** → Don't commit with runtime errors visible in logs
-
-### Useful URLs
-- **API**: http://localhost:3210
-- **Web**: http://localhost:5173
-
-## Git
-```bash
-# Check before starting work
-git status
-
-# Review changes before commit
-git diff --stat
-
-# Commit after ALL tests pass (conventional commit format)
-git add -A && git commit -m "type(scope): description"
+pnpm lint
+pnpm typecheck
+pnpm build
+pnpm test:unit
 ```
 
-### Commit Message Format
+Then run manual headed verification (or `agent-browser`) for affected routes and capture screenshots.
 
-Format: `type(scope): description`
+### 6.5 Cross-Cutting Tasks (Convex + UI)
 
-**Allowed types:**
-| Type | When to use |
-|------|-------------|
-| `feat` | New feature or capability |
-| `fix` | Bug fix |
-| `docs` | Documentation only |
-| `style` | Formatting, no code change |
-| `refactor` | Code change without feature/fix |
-| `perf` | Performance improvement |
-| `test` | Adding or updating tests |
-| `chore` | Build, tooling, dependencies |
-| `revert` | Reverting a previous commit |
+Run all applicable gates from 6.3 and 6.4.
 
-**Allowed scopes:**
-| Scope | What it covers |
-|-------|----------------|
-| `agent` | Agent loop, context, LLM integration |
-| `tools` | Tool implementations (web, file, code, etc.) |
-| `memory` | Memory system, embeddings, recall |
-| `api` | convex, middleware |
-| `web` | React frontend, components, routing |
-| `auth` | Authentication, authorization |
-| `docs` | Documentation files (README, AGENTS.md) |
-| `infra` | Build config, CI/CD, scripts |
-| `test` | Test infrastructure, utilities |
-| `config` | Config files (tsconfig, biome, etc.) |
+### 6.6 Test Coverage Rules (Mandatory)
 
-**Examples:**
-```bash
-# Good
-feat(agent): add streaming response handler
-fix(api): handle missing auth header gracefully
-test(memory): add property tests for embeddings
-chore(infra): update biome to v1.9
+1. Any implementation task must add or update tests for changed behavior.
+2. Shared/domain logic changes in `shared/**` require unit tests under existing Vitest suites.
+3. If UI behavior changes and no automated UI test harness exists, record manual verification evidence with screenshots and exact flows.
+4. Do not claim `passWithNoTests` for implementation tasks unless a scoped break-glass override is logged.
+5. For user-critical flows touched by the task, verification must cover both success and failure behavior (automated tests preferred; manual evidence allowed when no framework exists).
 
-# Bad - avoid these patterns
-feat: add feature                    # Missing scope
-feat(api): Add New Feature           # Don't capitalize
-feat(api): added endpoint            # Use imperative mood
-fix(api): fix bug                    # Be specific
+## 7. Convex Runtime Gate (Mandatory for Convex Tasks)
+
+Before approving any Convex-touching task:
+
+1. Confirm Convex CLI authentication is valid in current shell.
+2. Confirm deployment target in `web/.env.local` matches intended project.
+3. Run `cd web && npx convex dev --once` and log result.
+4. If production delivery is part of scope, run `cd web && npx convex deploy -y` and log deployment URL.
+5. Record deployment evidence in `docs/IMPLEMENTATION_STATE.md`.
+
+## 8. Browser Evidence Policy
+
+1. Save browser artifacts under `.artifacts/`.
+2. Use file naming: `.artifacts/<task-id>-<label>.png`.
+3. Do not commit `.artifacts/` by default.
+4. Record artifact paths in `docs/IMPLEMENTATION_STATE.md`.
+
+## 9. Approval and Commit Protocol
+
+1. No commit before required verification passes.
+2. Approval must be recorded in `docs/IMPLEMENTATION_STATE.md` before commit.
+3. Default approval source is agent self-approval after successful verification.
+4. Human approval is optional unless explicitly requested.
+5. Create one commit per approved task.
+6. Commit message format:
+
+```text
+<type>(<scope>): <description>
 ```
 
-### CRITICAL: Pre-commit Rules
-- **NEVER use `--no-verify`** - This flag is BANNED. No exceptions.
-- **NEVER skip hooks** - If pre-commit fails, FIX the issues.
-- **Fix ALL issues** - Even if issues are "not related to your changes", you must fix them before committing.
-- **No excuses** - "Pre-existing issue" or "not my code" is NOT a valid reason to skip.
-- If you cannot fix the issues, STOP and ask the user for help. Do NOT bypass with `--no-verify`.
+7. Record commit hash in `docs/IMPLEMENTATION_STATE.md`.
+8. Move to next task only after commit record is logged.
 
-## Pattern Checks
+Allowed commit types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `revert`.
 
-The `scripts/check-patterns.sh` enforces three architectural patterns. Run with:
-```bash
-./scripts/check-patterns.sh
-# Or via pnpm (added to pre-commit)
-pnpm patterns
-```
+Preferred scopes: `web`, `convex`, `shared`, `docs`, `infra`, `config`, `test`.
 
-### Checks Performed
+## 10. Break-Glass Override Protocol
 
-| # | Check | Why |
-|---|-------|-----|
-| 1 | No barrel exports (`export * from` in index.ts) | Prevents circular deps, improves tree-shaking |
-| 2 | No default exports (`export default`) | Forces consistent named imports |
-| 3 | Centralized env access (`process.env`, `import.meta.env`) | Single source of truth for config |
+A bypass is allowed only when all are true:
 
-### Allowed Exceptions
+1. Human explicitly requests override.
+2. Override is scoped to a specific task and specific gate/rule.
+3. Agent logs in `docs/IMPLEMENTATION_STATE.md`:
+   1. Timestamp
+   2. Task ID
+   3. Rule/gate bypassed
+   4. Scope
+   5. Human-stated reason
+4. All non-overridden rules remain mandatory.
 
-| Pattern | Exception | Reason |
-|---------|-----------|--------|
-| Default exports | `*.d.ts` files | TypeScript type definitions may require it |
-| Default exports | `*.test.ts`, `*.spec.ts` | Test utilities sometimes need it |
-| Env access | Files named `env.ts` | Designated environment config file |
-| Env access | Test files (`*.test.ts`, `*.spec.ts`) | May check CI environment |
-| Env access | E2E tests (`e2e/*.ts`) | May check CI for skip conditions |
+## 11. Failure and Blocker Protocol
 
-### Manual Quick Checks
-```bash
-# Must return nothing
-find packages -name "index.ts" -exec grep -l "export \* from" {} \;  # NO barrel exports
-grep -r "export default" packages/ --include="*.ts" --include="*.tsx" | head -5  # NO default exports
-grep -r "import.meta.env\." packages/ --include="*.ts" | grep -v "env.ts"  # Centralized env
-grep -r "process.env\." packages/ --include="*.ts" | grep -v "env.ts"  # Centralized env
+1. If any required gate fails, do not commit.
+2. Log failure evidence and likely root cause in `docs/IMPLEMENTATION_STATE.md`.
+3. Apply fix and re-run all affected gates.
+4. If blocked on external dependency or human stop instruction, set phase to `blocked`, record unblock condition, and pause.
 
-## Troubleshooting
-```bash
-# Reinstall dependencies
-rm -rf node_modules dist && pnpm install
-prek install
-pnpm exec playwright install --with-deps
+## 12. Task Completion Criteria
 
-## Specs
-- `openspec/project.md` (conventions)
-- `openspec/specs/*/spec.md` (requirements)
-- `openspec/changes/*/tasks.md` (pending work)
+A task is complete only when all are true:
 
-## Known Constraints
-- **Zod**: Import from `zod` (latest)
-- **TanStack Router**: `<Link>` not `<a>` (preserves state)
-- **No barrel exports**: Import directly from files
-- **No default exports**: Named exports only
-- **Pre-commit runs E2E**: NEVER skip tests, NEVER use `--no-verify`
-- **Fix pre-existing issues**: If hooks fail on code you didn't write, FIX IT anyway
-- **Reference implementation**: Check `../openclaw/` for patterns
-- **Local Docker**: Use `make run-dev` to start all services
+1. Scope is implemented.
+2. Applicable verification gates passed (or `na` with valid reason).
+3. Manual/browser verification done for UI/runtime changes.
+4. Evidence captured in `docs/IMPLEMENTATION_STATE.md`.
+5. Approval record exists.
+6. `legacy_backcompat_check` is `pass` (or justified `na`).
+7. Approved task commit is created and logged.
 
-## Live Testing Skills
-| Task | Skill |
-|------|-------|
-| Browser automation | `/agent-browser` |
-| UI verification | `/webapp-testing` |
+## 13. Harness Validation Scenarios
+
+The harness must remain workable for:
+
+1. Docs-only task: schema-compliant state entries, non-applicable gates marked `na`.
+2. Convex-only task: Convex runtime gate completed, verification logged, approval + commit recorded.
+3. UI/runtime task: standard checks pass, affected routes manually verified, screenshot evidence logged.
+4. Multi-task request: tasks executed one-at-a-time with independent verification + approval + commit.
+5. Break-glass request: only scoped gates bypassed; all other gates enforced.
+
+## 14. Locked Defaults
+
+1. Harness applies to all tasks, including advisory/read-only work.
+2. Verification follows applicability matrix with explicit `na` reasons.
+3. One-task-at-a-time progression is mandatory.
+4. `CLAUDE.md` is not a higher-precedence contract than `AGENTS.md`.
+5. Never use `--no-verify` to bypass hooks.
+6. Never skip failing verification gates without explicit break-glass.
+7. No default exports in application/shared source unless technically required (config files and framework-required exceptions allowed).
+8. No barrel `export *` patterns in new/changed modules.
+9. Avoid direct environment contract sprawl; keep runtime env usage explicit and minimal.
+10. `.env.local` remains local/deployment metadata and must not be treated as a committed source of truth.

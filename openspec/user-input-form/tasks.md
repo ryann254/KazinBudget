@@ -6,26 +6,26 @@ Numbered implementation tasks for the user input form feature. Each task is a si
 
 ## Phase 1: Shared Constants and Schema
 
-- [ ] **1. Create Nairobi areas constant file**
+- [x] **1. Create Nairobi areas constant file**
   Create `packages/shared/constants/nairobi-areas.ts`. Define and export a `NAIROBI_AREAS` array of objects with `{ value: string; label: string }` shape. Include at least 50 neighborhoods: Westlands, Kilimani, CBD, Karen, Lang'ata, Lavington, Kileleshwa, South B, South C, Eastleigh, Kasarani, Roysambu, Ruaka, Juja, Thika Road, Parklands, Ngong Road, Upper Hill, Hurlingham, Ngara, Pangani, Embakasi, Donholm, Umoja, Pipeline, Rongai, Kitengela, Syokimau, Mlolongo, Athi River, Kahawa, Githurai, Zimmerman, Kahawa West, Garden Estate, Muthaiga, Runda, Gigiri, Spring Valley, Loresho, Mountain View, Waiyaki Way, Dagoretti, Kibera, Kawangware, Satellite, Utawala, Ruai, Njiru, Kangundo Road. Sort alphabetically by label.
 
-- [ ] **2. Create Zod submission schema**
+- [x] **2. Create Zod submission schema**
   Create `packages/shared/schemas/submission.ts`. Define and export `submissionSchema` using Zod with six fields: `name` (string, min 2, max 100), `companyName` (string, min 1, max 200), `companyLocation` (string, min 1), `residentialArea` (string, min 1), `yearsOfExperience` (number, int, min 0, max 50), `monthlyGrossSalary` (number, positive, max 100000000). Also export the inferred type as `SubmissionFormData`.
 
-- [ ] **3. Write unit tests for the Zod schema**
+- [x] **3. Write unit tests for the Zod schema**
   Create `packages/shared/schemas/submission.test.ts`. Test cases: valid input passes; empty name fails; name under 2 chars fails; empty company name fails; negative years of experience fails; decimal years of experience fails; zero salary fails; negative salary fails; salary above max fails; missing fields fail; boundary values (0 years, 50 years) pass.
 
-- [ ] **4. Run schema tests and confirm they pass**
+- [x] **4. Run schema tests and confirm they pass**
   Execute `pnpm test:unit -- packages/shared/schemas/submission.test.ts` and verify all tests are green.
 
 ---
 
 ## Phase 2: Convex Backend
 
-- [ ] **5. Add submissions table to Convex schema**
+- [x] **5. Add submissions table to Convex schema**
   Edit `packages/convex/schema.ts`. Add a `submissions` table with fields: `name` (string), `company_name` (string), `company_location` (string), `residential_area` (string), `years_of_experience` (number), `monthly_gross_salary` (number), `status` (string, one of "pending", "calculated", "error"), `created_at` (number, timestamp), `updated_at` (number, timestamp). Add an index on `status`.
 
-- [ ] **6. Create the submissions mutation**
+- [x] **6. Create the submissions mutation**
   Create `packages/convex/api/routes/submissions.ts`. Export a named Convex mutation `create` that accepts the six form fields as arguments, validates them, writes a new row to the `submissions` table with `status: "pending"` and `created_at` / `updated_at` set to `Date.now()`, and returns the new document ID.
 
 - [ ] **7. Push Convex schema and verify deployment**
@@ -57,7 +57,7 @@ Numbered implementation tasks for the user input form feature. Each task is a si
 - [ ] **13. Install shadcn Form, Input, and Button components**
   Run `npx shadcn@latest add form input button` inside `packages/web` if not already present.
 
-- [ ] **14. Create the SubmissionForm component**
+- [x] **14. Create the SubmissionForm component**
   Create `packages/web/src/components/submission-form.tsx`. Use `useForm` from react-hook-form with `zodResolver(submissionSchema)`. Render six fields using shadcn `Form`, `FormField`, `FormItem`, `FormLabel`, `FormControl`, `FormMessage`:
     - **Name**: `Input` type text, placeholder "e.g., Jane Wanjiku"
     - **Company Name**: `Input` type text, placeholder "e.g., Safaricom"
@@ -110,7 +110,7 @@ Numbered implementation tasks for the user input form feature. Each task is a si
 - [ ] **23. Add loading state to submit button**
   While the Convex mutation is in flight, show a spinner/loading indicator on the submit button and disable it to prevent double submission.
 
-- [ ] **24. Add currency formatting helper**
+- [x] **24. Add currency formatting helper**
   Create `packages/shared/utils/format-currency.ts`. Export a `formatKES` function that formats a number as Kenyan Shilling (e.g., `80000` -> `KES 80,000`). Use this in the salary input's display where appropriate.
 
 - [ ] **25. Accessibility audit**

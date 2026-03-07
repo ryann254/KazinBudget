@@ -14,7 +14,7 @@
 
 ## Kenya Tax Calculation Module
 
-- [ ] 5. Create `src/lib/kenya-tax.ts`. Export the following pure functions:
+- [x] 5. Create `src/lib/kenya-tax.ts`. Export the following pure functions:
   - `calculatePAYE(monthlyGross: number): number` - Implement Kenya PAYE brackets: 10% up to 24,000; 25% for 24,001-32,333; 30% for 32,334-500,000; 32.5% for 500,001-800,000; 35% above 800,000. Subtract personal relief of KES 2,400.
   - `calculateNSSF(monthlyGross: number): number` - 6% of gross, capped at KES 2,160/month.
   - `calculateSHIF(monthlyGross: number): number` - 2.75% of gross.
@@ -22,7 +22,7 @@
   - `calculateTotalDeductions(monthlyGross: number): number` - Sum of all the above.
   - `calculateNetSalary(monthlyGross: number): number` - Gross minus total deductions.
 
-- [ ] 6. Write unit tests in `src/__tests__/kenya-tax.test.ts`:
+- [x] 6. Write unit tests in `src/__tests__/kenya-tax.test.ts`:
   - Test PAYE for salary KES 20,000 (only 10% bracket).
   - Test PAYE for salary KES 30,000 (spans two brackets).
   - Test PAYE for salary KES 100,000 (spans three brackets).
@@ -37,7 +37,7 @@
 
 ## Projection Engine
 
-- [ ] 7. Create `src/lib/projections.ts`. Define TypeScript types:
+- [x] 7. Create `src/lib/projections.ts`. Define TypeScript types:
   ```ts
   type ProjectionInput = {
     currentSalary: number;       // monthly gross
@@ -71,12 +71,12 @@
   };
   ```
 
-- [ ] 8. In `src/lib/projections.ts`, implement and export:
+- [x] 8. In `src/lib/projections.ts`, implement and export:
   - `projectYear(input: ProjectionInput, year: number): YearProjection` - Apply compound growth to salary and each expense, recalculate taxes using `kenya-tax.ts` functions, compute take-home and real take-home.
   - `projectAll(input: ProjectionInput, years?: number): YearProjection[]` - Call `projectYear` for each year from 0 to `years` (default 10). Return the full array.
   - `getMilestones(projections: YearProjection[]): { year3: YearProjection; year5: YearProjection; year7: YearProjection; year10: YearProjection }` - Extract the four milestone snapshots from the projections array.
 
-- [ ] 9. Write unit tests in `src/__tests__/projections.test.ts`:
+- [x] 9. Write unit tests in `src/__tests__/projections.test.ts`:
   - Test `projectYear` for year 0 returns current values unchanged.
   - Test `projectYear` for year 3 with known inputs matches hand-calculated result.
   - Test `projectAll` returns an array of length 11 (years 0-10).
@@ -89,7 +89,7 @@
 
 ## Convex Backend
 
-- [ ] 10. Edit `convex/schema.ts` to add a `growthAssumptions` table:
+- [x] 10. Edit `convex/schema.ts` to add a `growthAssumptions` table:
   ```ts
   growthAssumptions: defineTable({
     salaryGrowthRate: v.number(),
@@ -107,7 +107,7 @@
   })
   ```
 
-- [ ] 11. Create `convex/growthAssumptions.ts` with:
+- [x] 11. Create `convex/growthAssumptions.ts` with:
   - A `query` function `getDefaults` that returns the single assumptions document (or hardcoded defaults if none exists in the DB).
   - A `mutation` function `updateDefaults` that upserts the assumptions document (for future admin use).
 

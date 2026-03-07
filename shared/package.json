@@ -1,0 +1,21 @@
+{
+  "name": "@kazibudget/shared",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./lib/index.ts",
+  "scripts": {
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'no linter configured yet'"
+  },
+  "dependencies": {
+    "fuse.js": "^7.1.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.0"
+  }
+}

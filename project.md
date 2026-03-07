@@ -12,6 +12,13 @@ WorkPlace Budgeting is a simple web app/tool that allows new and existing job se
 - **Server**: Convex
 - **Database**: Convex DB
 
+## Core Features
+
+- Instant calculation of take home pay, taxes and expenses
+- Dashboards to track where your money goes
+- Dashboards to track 10-Year Salary Projection and Taxes vs Take home
+- Comparison to show how much you're getting paid vs the market rate for someone with your experience.
+
 ## Code Conventions
 
 ### TypeScript

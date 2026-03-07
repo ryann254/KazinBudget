@@ -1,0 +1,10 @@
+{
+  "name": "@kazibudget/convex",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "convex": "^1.21.0",
+    "@kazibudget/shared": "workspace:*"
+  }
+}
