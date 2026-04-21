@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { useUser, UserButton } from "@clerk/clerk-react"
 import {
-  userData, expenseBreakdown, dashboardSummary,
+  userData, dashboardSummary,
   expenseChartData, growthProjections, growthChartData,
   salaryComparison, salaryDistributionData, travelDetails,
   rentDetails, foodDetails, formatKES, growthAssumptions
@@ -19,7 +19,10 @@ import { createBudgetFingerprint } from '@kazibudget/shared/lib/budget-fingerpri
 import { useBudgetForm } from '@/hooks/use-budget-form'
 import { useBudgetCalculation } from '@/hooks/use-budget-calculation'
 import { useDebouncedRecalc } from '@/hooks/use-debounced-recalc'
+import { useExpenseList } from '@/hooks/use-expense-list'
 import { ValidatedField } from '@/components/input/validated-field'
+import { ExpenseRow } from '@/components/expenses/expense-row'
+import { AddExpenseRow } from '@/components/expenses/add-expense-row'
 
 type TabKey = 'input' | 'dashboard' | 'growth' | 'comparison'
 
@@ -80,15 +83,20 @@ export default function App() {
 
   const [hasCalculated, setHasCalculated] = useState(false)
   const { calculate } = useBudgetCalculation()
+  const expenseList = useExpenseList()
 
   const fingerprintInput = useMemo(
     () => ({
       grossSalary: Math.max(0, Number(values.grossSalary) || 0),
       workLocation: values.workLocation ?? '',
       homeArea: values.homeArea ?? '',
-      expenseItems: [] as { name: string; amount: number }[],
+      expenseItems: expenseList.items.map((item) => ({
+        name: item.name,
+        amount: item.amount,
+        category: item.category,
+      })),
     }),
-    [values.grossSalary, values.workLocation, values.homeArea],
+    [values.grossSalary, values.workLocation, values.homeArea, expenseList.items],
   )
 
   const currentFingerprint = useMemo(
@@ -375,34 +383,38 @@ export default function App() {
           MONTHLY EXPENSES
         </div>
         <div className="p-6 sm:p-8 pt-10" style={{ ...brutalistCard, backgroundColor: COLORS.white, borderLeft: `4px solid ${COLORS.teal}` }}>
-          <div className="space-y-0">
-            {[
-              { name: expenseBreakdown.rent.label, amount: expenseBreakdown.rent.amount },
-              { name: expenseBreakdown.food.label, amount: expenseBreakdown.food.amount },
-              { name: expenseBreakdown.transport.label, amount: expenseBreakdown.transport.amount },
-              ...expenseBreakdown.custom.map(c => ({ name: c.name, amount: c.amount })),
-            ].map((item, i) => {
-              const leftBorderColors = [COLORS.red, COLORS.blue, COLORS.yellow, COLORS.teal, COLORS.muted]
-              return (
-                <div
-                  key={item.name}
-                  className="flex justify-between items-center px-5 py-3 font-semibold text-sm"
-                  style={{
-                    borderLeft: `3px solid ${leftBorderColors[i % leftBorderColors.length]}`,
-                    borderBottom: `2px solid ${COLORS.black}`,
-                    backgroundColor: COLORS.white,
-                    fontFamily: "'Work Sans', sans-serif",
-                  }}
-                >
-                  <span className="uppercase font-bold text-xs" style={{ letterSpacing: '0.05em' }}>— {item.name}</span>
-                  <span className="font-bold">{formatKES(item.amount)}</span>
-                </div>
-              )
-            })}
+          <div
+            className="space-y-0 overflow-y-auto"
+            style={{ maxHeight: '320px', border: `2px solid ${COLORS.black}` }}
+          >
+            {expenseList.isLoading ? (
+              <div className="px-5 py-6 text-center text-xs font-bold uppercase" style={{ color: COLORS.muted, letterSpacing: '0.15em' }}>
+                Loading expenses&hellip;
+              </div>
+            ) : expenseList.items.length === 0 ? (
+              <div className="px-5 py-6 text-center text-xs font-bold uppercase" style={{ color: COLORS.muted, letterSpacing: '0.15em' }}>
+                No expenses yet
+              </div>
+            ) : (
+              expenseList.items.map((item, i) => {
+                const leftBorderColors = [COLORS.red, COLORS.blue, COLORS.yellow, COLORS.teal, COLORS.muted]
+                const accent = leftBorderColors[i % leftBorderColors.length]
+                return (
+                  <ExpenseRow
+                    key={item.id}
+                    row={{ id: item.id, name: item.name, amount: item.amount, isAuto: item.isAuto }}
+                    accentColor={accent}
+                    onSave={(next) => expenseList.update(item.id, next)}
+                    onDelete={() => expenseList.remove(item.id)}
+                  />
+                )
+              })
+            )}
+            <AddExpenseRow onAdd={expenseList.add} />
           </div>
           <div className="mt-5 p-4 text-center font-bold text-lg"
             style={{ border: `3px solid ${COLORS.black}`, backgroundColor: COLORS.black, color: COLORS.yellow, fontFamily: "'Work Sans', sans-serif", fontWeight: 900 }}>
-            TOTAL EXPENSES: {formatKES(dashboardSummary.totalExpenses)}
+            TOTAL EXPENSES: {formatKES(expenseList.items.reduce((sum, i) => sum + i.amount, 0))}
           </div>
         </div>
       </div>

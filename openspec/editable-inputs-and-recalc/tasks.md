@@ -38,13 +38,13 @@ Supersedes `openspec/implementation-phase/tasks.md` tasks T020–T057.
 
 ## Phase 4 — Monthly expenses CRUD
 
-- [ ] 22. Create `web/src/components/expenses/expense-row-menu.tsx` — shadcn `DropdownMenu` with Edit / Delete items, styled with brutalist border + 4 px offset shadow.
-- [ ] 23. Create `web/src/components/expenses/expense-row.tsx` — row display; hover reveals 3-dot trigger; holds `isEditing` state; Edit swaps to inline name + amount inputs + ✓/✕; `Enter` saves, `Escape` cancels.
-- [ ] 24. Wire row save → `expenses.update`; delete → `expenses.remove` (skip confirm dialog for MVP; rely on undo affordance later).
-- [ ] 25. Create `web/src/components/expenses/add-expense-row.tsx` — persistent `+ Add item` row; click expands to inline inputs; ✓ calls `expenses.create`.
-- [ ] 26. Replace static expense list in `App.tsx` with live query `expenses.listBySession`. Container: fixed height (keep current value), `overflow-y: auto`.
-- [ ] 27. Expense edits invalidate `lastCalcFingerprint` → triggers recalc pipeline from Phase 3.
-- [ ] 28. Tests: row menu visibility on hover, edit save/cancel, delete, add-item; container scroll on overflow.
+- [x] 22. shadcn `DropdownMenu` usage inlined into `expense-row.tsx` (rather than separate `expense-row-menu.tsx` wrapper) — simpler surface; brutalist border + 4 px offset shadow.
+- [x] 23. Create `web/src/components/expenses/expense-row.tsx` — row display; hover reveals 3-dot trigger; holds `isEditing` state; Edit swaps to inline name + amount inputs + ✓/✕; `Enter` saves, `Escape` cancels.
+- [x] 24. Wire row save → `expenses.update`; delete → `expenses.remove` (no confirm dialog for MVP). Auto expenses hide the Delete option (backend rejects it anyway).
+- [x] 25. Create `web/src/components/expenses/add-expense-row.tsx` — persistent `+ Add item` row; click expands to inline inputs; ✓ calls `expenses.create` with category="custom".
+- [x] 26. `useExpenseList` hook wraps `listBySession/create/update/remove`. App.tsx replaces static expense list with live query. Container: `maxHeight: 320px` + `overflow-y: auto`.
+- [x] 27. Expense edits propagate through `fingerprintInput.expenseItems` → `createBudgetFingerprint` changes → `useDebouncedRecalc` fires → `calculate()` runs.
+- [ ] 28. Web has no vitest harness; component tests deferred per AGENTS.md §6.6 note 3 to Phase 5 manual verification.
 
 ## Phase 5 — Integration QA + commit
 
