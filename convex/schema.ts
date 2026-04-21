@@ -117,4 +117,16 @@ export default defineSchema({
     payload: v.string(),
     created_at: v.number(),
   }).index("by_owner_fingerprint", ["owner_id", "fingerprint"]),
+
+  userProfiles: defineTable({
+    owner_id: v.string(),
+    full_name: v.optional(v.string()),
+    company: v.optional(v.string()),
+    job_title: v.optional(v.string()),
+    work_location: v.optional(v.string()),
+    home_area: v.optional(v.string()),
+    gross_salary: v.optional(v.number()),
+    experience_years: v.optional(v.number()),
+    updated_at: v.number(),
+  }).index("by_owner", ["owner_id"]),
 });

@@ -17,6 +17,7 @@ import type * as submissions from "../submissions.js";
 import type * as takeHome_getCachedResult from "../takeHome/getCachedResult.js";
 import type * as takeHome_getResult from "../takeHome/getResult.js";
 import type * as takeHome_storeResult from "../takeHome/storeResult.js";
+import type * as userProfile from "../userProfile.js";
 
 import type {
   ApiFromModules,
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   "takeHome/getCachedResult": typeof takeHome_getCachedResult;
   "takeHome/getResult": typeof takeHome_getResult;
   "takeHome/storeResult": typeof takeHome_storeResult;
+  userProfile: typeof userProfile;
 }>;
 
 /**

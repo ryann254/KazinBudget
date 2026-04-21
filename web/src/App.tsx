@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
@@ -21,6 +21,8 @@ import { useBudgetCalculation } from '@/hooks/use-budget-calculation'
 import { useDebouncedRecalc } from '@/hooks/use-debounced-recalc'
 import { useExpenseList } from '@/hooks/use-expense-list'
 import { useSeedDefaultExpenses } from '@/hooks/use-seed-default-expenses'
+import { useUserProfile } from '@/hooks/use-user-profile'
+import { useFormAutosave } from '@/hooks/use-form-autosave'
 import { ValidatedField } from '@/components/input/validated-field'
 import { ExpenseRow } from '@/components/expenses/expense-row'
 import { AddExpenseRow } from '@/components/expenses/add-expense-row'
@@ -87,6 +89,36 @@ export default function App() {
   const { calculate } = useBudgetCalculation()
   const expenseList = useExpenseList()
   useSeedDefaultExpenses(expenseList)
+
+  const { profile, patch: patchProfile } = useUserProfile()
+  const hydratedRef = useRef(false)
+
+  const autosaveControls = useFormAutosave(values, patchProfile, {
+    enabled: profile !== undefined,
+  })
+
+  useEffect(() => {
+    if (hydratedRef.current) return
+    if (profile === undefined) return
+    if (profile === null) {
+      autosaveControls.primeBaseline(form.getValues())
+      hydratedRef.current = true
+      return
+    }
+    const saved = {
+      fullName: profile.fullName ?? form.getValues('fullName'),
+      company: profile.company ?? form.getValues('company'),
+      jobTitle: profile.jobTitle ?? form.getValues('jobTitle'),
+      workLocation: profile.workLocation ?? form.getValues('workLocation'),
+      homeArea: profile.homeArea ?? form.getValues('homeArea'),
+      grossSalary: profile.grossSalary ?? form.getValues('grossSalary'),
+      experienceYears:
+        profile.experienceYears ?? form.getValues('experienceYears'),
+    }
+    form.reset(saved)
+    autosaveControls.primeBaseline(saved)
+    hydratedRef.current = true
+  }, [profile, form, autosaveControls])
 
   const fingerprintInput = useMemo(
     () => ({
