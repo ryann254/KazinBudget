@@ -5,8 +5,8 @@ import {
 } from 'recharts'
 import { useUser, UserButton } from "@clerk/clerk-react"
 import {
-  userData, dashboardSummary,
-  expenseChartData, growthProjections, growthChartData,
+  userData,
+  growthProjections, growthChartData,
   salaryComparison, salaryDistributionData, travelDetails,
   rentDetails, foodDetails, formatKES, growthAssumptions
 } from './data/dummy'
@@ -114,6 +114,24 @@ export default function App() {
     () => calculateKenyanDeductions(fingerprintInput.grossSalary),
     [fingerprintInput.grossSalary],
   )
+
+  const liveBudget = useMemo(() => {
+    const gross = fingerprintInput.grossSalary
+    const totalDeductions = liveTax.totalDeductions
+    const totalExpenses = expenseList.items.reduce((sum, i) => sum + i.amount, 0)
+    const takeHome = Math.max(0, liveTax.netSalary - totalExpenses)
+    const savingsRate = gross > 0 ? (takeHome / gross) * 100 : 0
+
+    const expenseChart = [
+      { name: 'PAYE', value: liveTax.paye },
+      { name: 'NSSF', value: liveTax.nssfTotal },
+      { name: 'SHIF', value: liveTax.shif },
+      { name: 'HOUSING LEVY', value: liveTax.housingLevy },
+      ...expenseList.items.map((i) => ({ name: i.name.toUpperCase(), value: i.amount })),
+    ].filter((x) => x.value > 0)
+
+    return { gross, totalDeductions, totalExpenses, takeHome, savingsRate, expenseChart }
+  }, [fingerprintInput.grossSalary, liveTax, expenseList.items])
 
   const inputBorderColor = (fieldError: string | undefined) =>
     fieldError ? COLORS.red : COLORS.black
@@ -435,15 +453,15 @@ export default function App() {
         </div>
         <div className="text-3xl sm:text-4xl font-black"
           style={{ fontFamily: "'Work Sans', sans-serif", color: COLORS.white }}>
-          {formatKES(dashboardSummary.takeHome)}
+          {formatKES(liveBudget.takeHome)}
         </div>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-xs font-bold"
           style={{ color: COLORS.white, opacity: 0.8 }}>
-          <span>Gross: {formatKES(dashboardSummary.grossSalary)}</span>
+          <span>Gross: {formatKES(liveBudget.gross)}</span>
           <span style={{ opacity: 0.5 }}>|</span>
-          <span>Deductions: {formatKES(dashboardSummary.totalDeductions)}</span>
+          <span>Deductions: {formatKES(liveBudget.totalDeductions)}</span>
           <span style={{ opacity: 0.5 }}>|</span>
-          <span>Expenses: {formatKES(dashboardSummary.totalExpenses)}</span>
+          <span>Expenses: {formatKES(liveBudget.totalExpenses)}</span>
         </div>
       </div>
     </div>
@@ -455,10 +473,10 @@ export default function App() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-3">
         {[
-          { label: 'GROSS', amount: dashboardSummary.grossSalary, color: COLORS.blue, icon: <Zap size={20} /> },
-          { label: 'DEDUCTIONS', amount: dashboardSummary.totalDeductions, color: COLORS.red, icon: <AlertTriangle size={20} /> },
-          { label: 'EXPENSES', amount: dashboardSummary.totalExpenses, color: COLORS.yellow, icon: <BarChart3 size={20} /> },
-          { label: 'TAKE HOME', amount: dashboardSummary.takeHome, color: COLORS.teal, icon: <ThumbsUp size={20} /> },
+          { label: 'GROSS', amount: liveBudget.gross, color: COLORS.blue, icon: <Zap size={20} /> },
+          { label: 'DEDUCTIONS', amount: liveBudget.totalDeductions, color: COLORS.red, icon: <AlertTriangle size={20} /> },
+          { label: 'EXPENSES', amount: liveBudget.totalExpenses, color: COLORS.yellow, icon: <BarChart3 size={20} /> },
+          { label: 'TAKE HOME', amount: liveBudget.takeHome, color: COLORS.teal, icon: <ThumbsUp size={20} /> },
         ].map((card, i) => (
           <div
             key={card.label}
@@ -497,7 +515,7 @@ export default function App() {
             style={{ fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.15em' }}>MONTHLY SAVINGS RATE</div>
           <div className="text-4xl font-black mt-1"
             style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.black }}>
-            {((dashboardSummary.takeHome / dashboardSummary.grossSalary) * 100).toFixed(1)}%
+            {liveBudget.savingsRate.toFixed(1)}%
           </div>
         </div>
       </div>
@@ -520,7 +538,7 @@ export default function App() {
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
-                data={expenseChartData}
+                data={liveBudget.expenseChart}
                 cx="50%" cy="50%"
                 outerRadius={100}
                 innerRadius={40}
@@ -528,7 +546,7 @@ export default function App() {
                 stroke={COLORS.black}
                 strokeWidth={2}
               >
-                {expenseChartData.map((_, i) => (
+                {liveBudget.expenseChart.map((_, i) => (
                   <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                 ))}
               </Pie>
@@ -565,8 +583,8 @@ export default function App() {
               <span className="font-extrabold uppercase text-xs w-24 text-right" style={{ letterSpacing: '0.15em' }}>Amount</span>
               <span className="font-extrabold uppercase text-xs w-14 text-right" style={{ letterSpacing: '0.15em' }}>%</span>
             </div>
-            {expenseChartData.map((item, i) => {
-              const pct = ((item.value / dashboardSummary.grossSalary) * 100).toFixed(1)
+            {liveBudget.expenseChart.map((item, i) => {
+              const pct = liveBudget.gross > 0 ? ((item.value / liveBudget.gross) * 100).toFixed(1) : '0.0'
               return (
                 <div
                   key={item.name}
