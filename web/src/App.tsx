@@ -119,9 +119,9 @@ export default function App() {
     fieldError ? COLORS.red : COLORS.black
 
   const handleCalculate = async () => {
-    if (!isValid) {
+    const ok = await form.trigger()
+    if (!ok) {
       triggerShake()
-      void form.trigger()
       return
     }
     await calculate(fingerprintInput)
