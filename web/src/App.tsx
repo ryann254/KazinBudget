@@ -5,8 +5,7 @@ import {
 } from 'recharts'
 import { useUser, UserButton } from "@clerk/clerk-react"
 import {
-  userData, travelDetails,
-  rentDetails, foodDetails, formatKES, growthAssumptions
+  userData, formatKES, growthAssumptions
 } from './data/dummy'
 import {
   Home, User, BarChart3, TrendingUp, Users,
@@ -16,6 +15,11 @@ import { calculateKenyanDeductions } from '@kazibudget/shared/lib/kenya-tax-calc
 import { createBudgetFingerprint } from '@kazibudget/shared/lib/budget-fingerprint'
 import { projectAll } from '@kazibudget/shared/lib/projections'
 import { compareSalary } from '@kazibudget/shared/lib/salary-comparison'
+import {
+  estimateCommute,
+  estimateFood,
+  estimateRent,
+} from '@kazibudget/shared/lib/area-estimates'
 import { useBudgetForm } from '@/hooks/use-budget-form'
 import { useBudgetCalculation } from '@/hooks/use-budget-calculation'
 import { useDebouncedRecalc } from '@/hooks/use-debounced-recalc'
@@ -223,6 +227,21 @@ export default function App() {
         workLocation: values.workLocation ?? '',
       }),
     [fingerprintInput.grossSalary, values.jobTitle, values.experienceYears, values.workLocation],
+  )
+
+  const liveCommute = useMemo(
+    () => estimateCommute(values.homeArea ?? '', values.workLocation ?? ''),
+    [values.homeArea, values.workLocation],
+  )
+
+  const liveRent = useMemo(
+    () => estimateRent(values.homeArea ?? ''),
+    [values.homeArea],
+  )
+
+  const liveFood = useMemo(
+    () => estimateFood(values.workLocation ?? ''),
+    [values.workLocation],
   )
 
   const inputBorderColor = (fieldError: string | undefined) =>
@@ -442,19 +461,19 @@ export default function App() {
         <div className="p-6 sm:p-8 pt-10" style={{ ...brutalistCard, backgroundColor: COLORS.white, borderLeft: `4px solid ${COLORS.yellow}` }}>
           <div className="flex flex-wrap items-center gap-3 mb-5">
             <span className="font-bold text-sm" style={{ fontFamily: "'Work Sans', sans-serif" }}>
-              {travelDetails.origin}
+              {liveCommute.origin}
             </span>
             <span className="font-black text-lg" style={{ color: COLORS.red }}>&#8594;</span>
             <span className="font-bold text-sm" style={{ fontFamily: "'Work Sans', sans-serif" }}>
-              {travelDetails.destination}
+              {liveCommute.destination}
             </span>
             <span className="px-3 py-1 text-xs font-extrabold"
               style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.yellow, fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.15em' }}>
-              {travelDetails.distance}
+              {liveCommute.distance}
             </span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {travelDetails.modes.map((mode, i) => {
+            {liveCommute.modes.map((mode, i) => {
               const topBorderColors = [COLORS.red, COLORS.blue, COLORS.yellow, COLORS.teal]
               return (
                 <div
@@ -711,11 +730,11 @@ export default function App() {
           <div className="mb-4">
             <Home size={16} className="inline mr-2" style={{ color: COLORS.blue }} />
             <span className="text-lg font-bold" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.black }}>
-              Rent in {rentDetails.area}
+              Rent in {liveRent.area}
             </span>
           </div>
           <div className="space-y-3">
-            {rentDetails.options.map((opt) => (
+            {liveRent.options.map((opt) => (
               <div key={opt.type} className="flex justify-between items-center py-3 px-4"
                 style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
                 <span className="font-bold text-xs uppercase" style={{ fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.05em' }}>— {opt.type}</span>
@@ -737,11 +756,11 @@ export default function App() {
           <div className="mb-4">
             <Star size={16} className="inline mr-2" style={{ color: COLORS.yellow }} />
             <span className="text-lg font-bold" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.black }}>
-              Food in {foodDetails.area}
+              Food in {liveFood.area}
             </span>
           </div>
           <div className="space-y-3">
-            {foodDetails.nearbyRestaurants.map((r) => (
+            {liveFood.options.map((r) => (
               <div key={r.name} className="flex justify-between items-center py-3 px-4"
                 style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
                 <span className="font-bold text-xs" style={{ fontFamily: "'Work Sans', sans-serif" }}>— {r.name}</span>
