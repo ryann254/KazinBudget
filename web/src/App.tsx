@@ -5,9 +5,7 @@ import {
 } from 'recharts'
 import { useUser, UserButton } from "@clerk/clerk-react"
 import {
-  userData,
-  growthProjections, growthChartData,
-  salaryComparison, salaryDistributionData, travelDetails,
+  userData, travelDetails,
   rentDetails, foodDetails, formatKES, growthAssumptions
 } from './data/dummy'
 import {
@@ -16,10 +14,13 @@ import {
 } from 'lucide-react'
 import { calculateKenyanDeductions } from '@kazibudget/shared/lib/kenya-tax-calculator'
 import { createBudgetFingerprint } from '@kazibudget/shared/lib/budget-fingerprint'
+import { projectAll } from '@kazibudget/shared/lib/projections'
+import { compareSalary } from '@kazibudget/shared/lib/salary-comparison'
 import { useBudgetForm } from '@/hooks/use-budget-form'
 import { useBudgetCalculation } from '@/hooks/use-budget-calculation'
 import { useDebouncedRecalc } from '@/hooks/use-debounced-recalc'
 import { useExpenseList } from '@/hooks/use-expense-list'
+import { useSeedDefaultExpenses } from '@/hooks/use-seed-default-expenses'
 import { ValidatedField } from '@/components/input/validated-field'
 import { ExpenseRow } from '@/components/expenses/expense-row'
 import { AddExpenseRow } from '@/components/expenses/add-expense-row'
@@ -75,6 +76,7 @@ export default function App() {
     useBudgetForm({
       fullName: userDisplayName,
       company: userCompany,
+      jobTitle: 'Software Engineer',
       workLocation: userData.companyLocation,
       homeArea: userData.residentialArea,
       grossSalary: userData.monthlySalary,
@@ -84,6 +86,7 @@ export default function App() {
   const [hasCalculated, setHasCalculated] = useState(false)
   const { calculate } = useBudgetCalculation()
   const expenseList = useExpenseList()
+  useSeedDefaultExpenses(expenseList)
 
   const fingerprintInput = useMemo(
     () => ({
@@ -133,6 +136,63 @@ export default function App() {
     return { gross, totalDeductions, totalExpenses, takeHome, savingsRate, expenseChart }
   }, [fingerprintInput.grossSalary, liveTax, expenseList.items])
 
+  const liveProjections = useMemo(() => {
+    const rent = expenseList.items.find((i) => i.category === 'rent')?.amount ?? 0
+    const food = expenseList.items.find((i) => i.category === 'food')?.amount ?? 0
+    const transport = expenseList.items.find((i) => i.category === 'transport')?.amount ?? 0
+    const custom = expenseList.items
+      .filter((i) => i.category === 'custom')
+      .reduce((sum, i) => sum + i.amount, 0)
+
+    const years = projectAll(
+      {
+        currentSalary: Math.max(0, fingerprintInput.grossSalary),
+        currentRent: rent,
+        currentFood: food,
+        currentTransport: transport,
+        currentCustomExpenses: custom,
+        salaryGrowthRate: growthAssumptions.salaryGrowthRate / 100,
+        rentInflationRate: growthAssumptions.rentInflation / 100,
+        foodInflationRate: growthAssumptions.foodInflation / 100,
+        transportInflationRate: growthAssumptions.transportInflation / 100,
+        customInflationRate: growthAssumptions.generalCPI / 100,
+        generalInflationRate: growthAssumptions.generalCPI / 100,
+      },
+      10,
+    )
+
+    const chart = years.map((y) => ({
+      year: y.year,
+      salary: Math.round(y.salary),
+      takeHome: Math.round(y.takeHome),
+      expenses: Math.round(y.totalExpenses),
+      taxes: Math.round(y.totalTax),
+    }))
+
+    const byYear = (target: number) =>
+      years.find((y) => y.year === target) ?? years[0]
+
+    return {
+      chart,
+      current: byYear(0),
+      year3: byYear(3),
+      year5: byYear(5),
+      year7: byYear(7),
+      year10: byYear(10),
+    }
+  }, [fingerprintInput.grossSalary, expenseList.items])
+
+  const liveComparison = useMemo(
+    () =>
+      compareSalary({
+        userSalary: Math.max(0, fingerprintInput.grossSalary),
+        jobTitle: values.jobTitle ?? '',
+        experienceYears: Math.max(0, Number(values.experienceYears) || 0),
+        workLocation: values.workLocation ?? '',
+      }),
+    [fingerprintInput.grossSalary, values.jobTitle, values.experienceYears, values.workLocation],
+  )
+
   const inputBorderColor = (fieldError: string | undefined) =>
     fieldError ? COLORS.red : COLORS.black
 
@@ -174,6 +234,7 @@ export default function App() {
             {([
               { name: 'fullName' as const, label: 'FULL NAME' },
               { name: 'company' as const, label: 'COMPANY' },
+              { name: 'jobTitle' as const, label: 'JOB TITLE' },
               { name: 'workLocation' as const, label: 'WORK LOCATION' },
               { name: 'homeArea' as const, label: 'HOME AREA' },
             ]).map((field) => {
@@ -709,7 +770,7 @@ export default function App() {
           <span className="text-lg font-bold" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.black }}>10-Year Salary Projection</span>
         </div>
         <ResponsiveContainer width="100%" height={280}>
-          <AreaChart data={growthChartData}>
+          <AreaChart data={liveProjections.chart}>
             <CartesianGrid strokeDasharray="3 3" stroke={COLORS.black} strokeOpacity={0.15} />
             <XAxis
               dataKey="year" tick={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 700, fontSize: 12 }}
@@ -745,10 +806,10 @@ export default function App() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
-            { data: growthProjections.current, label: 'NOW', borderColor: COLORS.red, rotate: '-1deg' },
-            { data: growthProjections.year3, label: 'YEAR 3', borderColor: COLORS.blue, rotate: '1.5deg' },
-            { data: growthProjections.year5, label: 'YEAR 5', borderColor: COLORS.yellow, rotate: '-0.5deg' },
-            { data: growthProjections.year10, label: 'YEAR 10', borderColor: COLORS.teal, rotate: '1deg' },
+            { data: liveProjections.current, label: 'NOW', borderColor: COLORS.red, rotate: '-1deg' },
+            { data: liveProjections.year3, label: 'YEAR 3', borderColor: COLORS.blue, rotate: '1.5deg' },
+            { data: liveProjections.year5, label: 'YEAR 5', borderColor: COLORS.yellow, rotate: '-0.5deg' },
+            { data: liveProjections.year10, label: 'YEAR 10', borderColor: COLORS.teal, rotate: '1deg' },
           ].map((m, i) => (
             <div
               key={m.label}
@@ -811,7 +872,7 @@ export default function App() {
           <span className="text-lg font-bold" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.black }}>Taxes vs Take Home Over Time</span>
         </div>
         <ResponsiveContainer width="100%" height={240}>
-          <LineChart data={growthChartData}>
+          <LineChart data={liveProjections.chart}>
             <CartesianGrid strokeDasharray="3 3" stroke={COLORS.black} strokeOpacity={0.15} />
             <XAxis
               dataKey="year" tick={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 700, fontSize: 12 }}
@@ -841,17 +902,23 @@ export default function App() {
 
   // ─── COMPARISON TAB ───────────────────────────────────────
   const renderComparison = () => {
-    const isBelow = salaryComparison.verdict === 'slightly_below'
-    const verdictColor = isBelow ? COLORS.red : COLORS.teal
+    const isBelow = liveComparison.verdict === 'below'
+    const isAbove = liveComparison.verdict === 'above'
+    const verdictColor = isBelow ? COLORS.red : isAbove ? COLORS.teal : COLORS.blue
+    const verdictLabel = isBelow
+      ? 'BELOW MARKET'
+      : isAbove
+        ? 'ABOVE MARKET'
+        : 'AT MARKET'
     return (
       <div className="space-y-12">
         {/* Role Info */}
         <div className="flex flex-wrap gap-3 items-center justify-center">
           {[
-            { label: salaryComparison.role, bg: COLORS.yellow },
-            { label: salaryComparison.location, bg: COLORS.blue },
-            { label: salaryComparison.experienceBand, bg: COLORS.red },
-            { label: `${salaryComparison.sampleSize} respondents`, bg: COLORS.teal },
+            { label: liveComparison.role, bg: COLORS.yellow },
+            { label: liveComparison.location, bg: COLORS.blue },
+            { label: liveComparison.experienceBand, bg: COLORS.red },
+            { label: `${liveComparison.sampleSize} respondents`, bg: COLORS.teal },
           ].map((tag) => (
             <span
               key={tag.label}
@@ -882,7 +949,7 @@ export default function App() {
             <span className="text-lg font-bold" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.black }}>Salary Distribution</span>
           </div>
           <ResponsiveContainer width="100%" height={300}>
-            <AreaChart data={salaryDistributionData}>
+            <AreaChart data={liveComparison.distribution}>
               <defs>
                 <linearGradient id="bellGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={COLORS.blue} stopOpacity={0.6} />
@@ -920,11 +987,11 @@ export default function App() {
             style={{ fontFamily: "'Work Sans', sans-serif" }}>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.yellow }} />
-              You: {formatKES(salaryComparison.userSalary)}
+              You: {formatKES(liveComparison.userSalary)}
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.red }} />
-              Median: {formatKES(salaryComparison.marketMedian)}
+              Median: {formatKES(liveComparison.marketMedian)}
             </div>
           </div>
         </div>
@@ -948,14 +1015,14 @@ export default function App() {
             <div
               className="absolute top-0 left-0 h-full flex items-center justify-end pr-3"
               style={{
-                width: `${salaryComparison.percentile}%`,
+                width: `${liveComparison.percentile}%`,
                 backgroundColor: COLORS.yellow,
                 borderRight: `3px solid ${COLORS.black}`,
                 transition: 'width 0.5s ease',
               }}
             >
               <span className="font-black text-lg" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.black }}>
-                {salaryComparison.percentile}th
+                {liveComparison.percentile}th
               </span>
             </div>
             {/* Markers */}
@@ -964,19 +1031,19 @@ export default function App() {
             <div className="absolute top-0 h-full" style={{ left: '75%', borderLeft: `2px dashed ${COLORS.black}`, opacity: 0.3 }} />
           </div>
           <div className="flex justify-between mt-3 text-xs font-bold" style={{ fontFamily: "'Work Sans', sans-serif" }}>
-            <span>P25: {formatKES(salaryComparison.p25)}</span>
-            <span>MEDIAN: {formatKES(salaryComparison.marketMedian)}</span>
-            <span>P75: {formatKES(salaryComparison.p75)}</span>
+            <span>P25: {formatKES(liveComparison.p25)}</span>
+            <span>MEDIAN: {formatKES(liveComparison.marketMedian)}</span>
+            <span>P75: {formatKES(liveComparison.p75)}</span>
           </div>
         </div>
 
         {/* Market Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {[
-            { label: 'YOUR SALARY', val: salaryComparison.userSalary, color: COLORS.blue },
-            { label: 'MARKET MEDIAN', val: salaryComparison.marketMedian, color: COLORS.red },
-            { label: 'MARKET MEAN', val: salaryComparison.marketMean, color: COLORS.yellow },
-            { label: 'P75 (TOP 25%)', val: salaryComparison.p75, color: COLORS.teal },
+            { label: 'YOUR SALARY', val: liveComparison.userSalary, color: COLORS.blue },
+            { label: 'MARKET MEDIAN', val: liveComparison.marketMedian, color: COLORS.red },
+            { label: 'MARKET MEAN', val: liveComparison.marketMean, color: COLORS.yellow },
+            { label: 'P75 (TOP 25%)', val: liveComparison.p75, color: COLORS.teal },
           ].map((s, i) => (
             <div
               key={s.label}
@@ -1010,14 +1077,14 @@ export default function App() {
               style={{ fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.15em' }}>VERDICT</div>
             <div className="text-xl md:text-2xl font-black uppercase"
               style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900 }}>
-              {salaryComparison.verdict === 'slightly_below' ? 'SLIGHTLY BELOW MARKET' : 'ON TRACK'}
+              {verdictLabel}
             </div>
             <div className="text-sm font-bold mt-3" style={{ fontFamily: "'Work Sans', sans-serif", opacity: 0.9 }}>
-              {salaryComparison.verdictText}
+              {liveComparison.verdictText}
             </div>
             <div className="mt-3 flex items-center justify-center gap-1 text-xs" style={{ opacity: 0.8 }}>
               <AlertTriangle size={12} />
-              <span className="font-bold">Confidence: {salaryComparison.confidence.toUpperCase()}</span>
+              <span className="font-bold">Confidence: {liveComparison.confidence.toUpperCase()}</span>
             </div>
           </div>
         </div>
@@ -1040,19 +1107,19 @@ export default function App() {
             <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
               <div className="text-xs font-bold uppercase mb-1" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>Monthly Gap</div>
               <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.red }}>
-                {formatKES(salaryComparison.marketMedian - salaryComparison.userSalary)}
+                {formatKES(liveComparison.marketMedian - liveComparison.userSalary)}
               </div>
             </div>
             <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
               <div className="text-xs font-bold uppercase mb-1" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>Annual Gap</div>
               <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.red }}>
-                {formatKES((salaryComparison.marketMedian - salaryComparison.userSalary) * 12)}
+                {formatKES((liveComparison.marketMedian - liveComparison.userSalary) * 12)}
               </div>
             </div>
             <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
               <div className="text-xs font-bold uppercase mb-1" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>To Reach P75</div>
               <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.blue }}>
-                {formatKES(salaryComparison.p75 - salaryComparison.userSalary)}
+                {formatKES(liveComparison.p75 - liveComparison.userSalary)}
               </div>
             </div>
           </div>
@@ -1092,7 +1159,7 @@ export default function App() {
               }}
             >
               <User size={12} />
-              {userDisplayName} &mdash; {userCompany}
+              {values.fullName || userDisplayName} &mdash; {values.jobTitle || userCompany}
             </div>
             <UserButton />
           </div>

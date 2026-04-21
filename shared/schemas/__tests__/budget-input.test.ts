@@ -4,6 +4,7 @@ import { BudgetInputSchema } from "../budget-input.js";
 const VALID_INPUT = {
   fullName: "Amani Wanjiku",
   company: "Safaricom PLC",
+  jobTitle: "Software Engineer",
   workLocation: "Westlands, Nairobi",
   homeArea: "Juja, Kiambu",
   grossSalary: 120_000,
@@ -23,6 +24,11 @@ describe("BudgetInputSchema", () => {
 
   it("fails when company is empty", () => {
     const result = BudgetInputSchema.safeParse({ ...VALID_INPUT, company: "" });
+    expect(result.success).toBe(false);
+  });
+
+  it("fails when jobTitle is empty", () => {
+    const result = BudgetInputSchema.safeParse({ ...VALID_INPUT, jobTitle: "" });
     expect(result.success).toBe(false);
   });
 

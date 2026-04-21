@@ -32,12 +32,16 @@ export function useExpenseList() {
   const isLoading = rows === undefined;
 
   const add = useCallback(
-    async (next: { name: string; amount: number }) => {
+    async (next: {
+      name: string;
+      amount: number;
+      category?: "tax" | "rent" | "food" | "transport" | "custom";
+    }) => {
       await createMutation({
         user_session_id: DEFAULT_SESSION_ID,
         name: next.name,
         amount: next.amount,
-        category: "custom",
+        category: next.category ?? "custom",
       });
     },
     [createMutation],

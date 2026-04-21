@@ -11,6 +11,11 @@ export const BudgetInputSchema = z.object({
     .trim()
     .min(1, "Company is required")
     .max(200, "Company must be at most 200 characters"),
+  jobTitle: z
+    .string()
+    .trim()
+    .min(1, "Job title is required")
+    .max(100, "Job title must be at most 100 characters"),
   workLocation: z
     .string()
     .trim()
