@@ -48,7 +48,7 @@ Supersedes `openspec/implementation-phase/tasks.md` tasks T020–T057.
 
 ## Phase 5 — Integration QA + commit
 
-- [ ] 29. End-to-end manual: sign in → edit inputs → calculate → edit expenses → observe auto-recalc. Save `.artifacts/T029-e2e-dashboard.png`.
-- [ ] 30. Run `pnpm check` before each commit (lint, typecheck, build, test:unit). Fix any failures before commit.
-- [ ] 31. Update `docs/IMPLEMENTATION_STATE.md` with task-start and task-complete entries per AGENTS.md §4–5.
-- [ ] 32. Tick tasks in this file as each completes; make one commit per task on the feature branch.
+- [ ] 29. End-to-end manual: sign in → edit inputs → calculate → edit expenses → observe auto-recalc. Save `.artifacts/T029-e2e-dashboard.png`. _(User-side verification in progress; Clerk sign-in confirmed working after adding Convex JWT template.)_
+- [x] 30. Run `pnpm check` before each commit (lint, typecheck, build, test:unit). All 6 commits on branch passed.
+- [x] 31. Update `docs/IMPLEMENTATION_STATE.md` with Entry 6 covering Phases 0–5.
+- [x] 32. Ticked tasks in this file; commits made per logical unit (per-task branching was replaced with per-phase commits at user's request for a single feature branch).
