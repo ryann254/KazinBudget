@@ -1,35 +1,37 @@
 # Kazi Budget Rules Completion - Tasks
 
+> **Note:** Tasks 20–57 (Phase 4 onward) are superseded by [`openspec/editable-inputs-and-recalc/`](../editable-inputs-and-recalc/tasks.md). Tasks 1–19 remain authoritative history for the completed Clerk + ownership work.
+
 ## Phase 0: Planning and Branching
 
-- [ ] 1. Create a feature branch for this bundle (example: `feat/implementation-phase`).
-- [ ] 2. Confirm `openspec/implementation-phase/design.md` is approved as implementation baseline.
-- [ ] 3. Capture current UI screenshots for Input and Dashboard tabs as before-state artifacts.
+- [x] 1. Create a feature branch for this bundle (example: `feat/implementation-phase`).
+- [x] 2. Confirm `openspec/implementation-phase/design.md` is approved as implementation baseline.
+- [x] 3. Capture current UI screenshots for Input and Dashboard tabs as before-state artifacts.
 
 ## Phase 1: Shared Contracts and Utilities
 
-- [ ] 4. Create `shared/schemas/budget-input.ts` with required fields for Personal Info + Salary & Tax and export `BudgetInputSchema` + inferred type.
-- [ ] 5. Add unit tests `shared/schemas/__tests__/budget-input.test.ts` for required-field and numeric validation behavior.
-- [ ] 6. Create `shared/lib/budget-fingerprint.ts` to generate a stable fingerprint from impactful fields (salary, locations, expense items, assumptions).
-- [ ] 7. Add unit tests `shared/lib/__tests__/budget-fingerprint.test.ts` to verify deterministic hashing and change sensitivity.
-- [ ] 8. Create `shared/lib/recommendations.ts` to compute the top two expense categories and at-most-four options from current to cheapest.
-- [ ] 9. Add unit tests `shared/lib/__tests__/recommendations.test.ts` for sorting, max-options cap, and fallback behavior.
+- [x] 4. Create `shared/schemas/budget-input.ts` with required fields for Personal Info + Salary & Tax and export `BudgetInputSchema` + inferred type.
+- [x] 5. Add unit tests `shared/schemas/__tests__/budget-input.test.ts` for required-field and numeric validation behavior.
+- [x] 6. Create `shared/lib/budget-fingerprint.ts` to generate a stable fingerprint from impactful fields (salary, locations, expense items, assumptions).
+- [x] 7. Add unit tests `shared/lib/__tests__/budget-fingerprint.test.ts` to verify deterministic hashing and change sensitivity.
+- [x] 8. Create `shared/lib/recommendations.ts` to compute the top two expense categories and at-most-four options from current to cheapest.
+- [x] 9. Add unit tests `shared/lib/__tests__/recommendations.test.ts` for sorting, max-options cap, and fallback behavior.
 
 ## Phase 2: Clerk Authentication Integration
 
-- [ ] 10. Add Clerk dependencies to `web/package.json` and install (`@clerk/clerk-react`, `convex/react-clerk` if missing).
-- [ ] 11. Add Clerk environment variables to `.env.local` and `.env.example` (`VITE_CLERK_PUBLISHABLE_KEY`, Convex Clerk issuer config values).
-- [ ] 12. Create `convex/auth.config.ts` and configure Clerk as auth provider for Convex.
-- [ ] 13. Update `web/src/main.tsx` to use `ClerkProvider` + `ConvexProviderWithClerk`.
-- [ ] 14. Add `web/src/components/auth/auth-gate.tsx` to render signed-out state and protect the app shell.
-- [ ] 15. Replace static user badge in `web/src/App.tsx` with Clerk user data (`firstName/lastName` fallback to email).
+- [x] 10. Add Clerk dependencies to `web/package.json` and install (`@clerk/clerk-react`, `convex/react-clerk` if missing).
+- [x] 11. Add Clerk environment variables to `.env.local` and `.env.example` (`VITE_CLERK_PUBLISHABLE_KEY`, Convex Clerk issuer config values).
+- [x] 12. Create `convex/auth.config.ts` and configure Clerk as auth provider for Convex.
+- [x] 13. Update `web/src/main.tsx` to use `ClerkProvider` + `ConvexProviderWithClerk`.
+- [x] 14. Add `web/src/components/auth/auth-gate.tsx` to render signed-out state and protect the app shell.
+- [x] 15. Replace static user badge in `web/src/App.tsx` with Clerk user data (`firstName/lastName` fallback to email).
 
 ## Phase 3: Ownership and Backend Guardrails
 
-- [ ] 16. Edit `convex/schema.ts` to add `owner_id` to `submissions` and `expenses` tables with indexes for owner-scoped queries.
-- [ ] 17. Edit `convex/submissions.ts` create/get handlers to enforce authenticated ownership via `ctx.auth.getUserIdentity()`.
-- [ ] 18. Edit `convex/expenses.ts` queries/mutations to enforce owner scoping and reject unauthorized access.
-- [ ] 19. Add backend tests for ownership isolation in `convex/__tests__/auth-ownership.test.ts` (or nearest existing suite).
+- [x] 16. Edit `convex/schema.ts` to add `owner_id` to `submissions` and `expenses` tables with indexes for owner-scoped queries.
+- [x] 17. Edit `convex/submissions.ts` create/get handlers to enforce authenticated ownership via `ctx.auth.getUserIdentity()`.
+- [x] 18. Edit `convex/expenses.ts` queries/mutations to enforce owner scoping and reject unauthorized access.
+- [x] 19. Add backend tests for ownership isolation in `convex/__tests__/auth-ownership.test.ts` (or nearest existing suite).
 
 ## Phase 4: Editable Input + Validation + Calculate Button
 

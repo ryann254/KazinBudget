@@ -58,6 +58,7 @@ For each task, the agent must consult all applicable sources:
 8. Start the next task only after the current task is completed and logged.
 9. Human review is optional unless explicitly requested.
 10. If task work is not represented in OpenSpec tasks, add/patch OpenSpec task entries before implementation.
+11. Whenever the agent compacts and loses context, it must re-open the relevant `tasks.md`, check current progress, and continue from the next incomplete task.
 
 ## 5. `docs/IMPLEMENTATION_STATE.md` Required Schema
 

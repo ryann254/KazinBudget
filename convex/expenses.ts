@@ -1,12 +1,18 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { assertOwnerAccess, getOwnerIdOrThrow } from "./lib/ownership";
 
 export const listBySession = query({
   args: { user_session_id: v.string() },
   handler: async (ctx, args) => {
+    const ownerId = getOwnerIdOrThrow(await ctx.auth.getUserIdentity());
     return await ctx.db
       .query("expenses")
-      .withIndex("by_session", (q) => q.eq("user_session_id", args.user_session_id))
+      .withIndex("by_owner_session", (q) =>
+        q
+          .eq("owner_id", ownerId)
+          .eq("user_session_id", args.user_session_id),
+      )
       .collect();
   },
 });
@@ -17,9 +23,14 @@ export const getSummary = query({
     gross_salary: v.number(),
   },
   handler: async (ctx, args) => {
+    const ownerId = getOwnerIdOrThrow(await ctx.auth.getUserIdentity());
     const expenses = await ctx.db
       .query("expenses")
-      .withIndex("by_session", (q) => q.eq("user_session_id", args.user_session_id))
+      .withIndex("by_owner_session", (q) =>
+        q
+          .eq("owner_id", ownerId)
+          .eq("user_session_id", args.user_session_id),
+      )
       .collect();
 
     const byCategory: Record<string, number> = {};
@@ -57,8 +68,10 @@ export const create = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const ownerId = getOwnerIdOrThrow(await ctx.auth.getUserIdentity());
     const now = Date.now();
     const id = await ctx.db.insert("expenses", {
+      owner_id: ownerId,
       ...args,
       is_auto: false,
       created_at: now,
@@ -76,10 +89,12 @@ export const update = mutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const ownerId = getOwnerIdOrThrow(await ctx.auth.getUserIdentity());
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Expense not found");
     }
+    assertOwnerAccess(existing.owner_id, ownerId);
 
     const updates: Record<string, unknown> = {
       updated_at: Date.now(),
@@ -110,10 +125,12 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("expenses") },
   handler: async (ctx, args) => {
+    const ownerId = getOwnerIdOrThrow(await ctx.auth.getUserIdentity());
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Expense not found");
     }
+    assertOwnerAccess(existing.owner_id, ownerId);
 
     if (existing.is_auto) {
       throw new Error("Cannot delete auto-generated expenses. Use resetAuto to restore the original value.");
@@ -127,10 +144,12 @@ export const remove = mutation({
 export const resetAuto = mutation({
   args: { id: v.id("expenses") },
   handler: async (ctx, args) => {
+    const ownerId = getOwnerIdOrThrow(await ctx.auth.getUserIdentity());
     const existing = await ctx.db.get(args.id);
     if (!existing) {
       throw new Error("Expense not found");
     }
+    assertOwnerAccess(existing.owner_id, ownerId);
 
     if (!existing.is_auto) {
       throw new Error("Only auto-generated expenses can be reset");
