@@ -28,13 +28,13 @@ Supersedes `openspec/implementation-phase/tasks.md` tasks T020–T057.
 
 ## Phase 3 — Recalculation + cache
 
-- [ ] 15. Add `convex/budget.ts` — `getByFingerprint({ fingerprint })` query + `upsertByFingerprint` mutation, owner-scoped, reusing `takeHomeResults`.
-- [ ] 16. Verify / add a `(owner_id, fingerprint)` index in `convex/schema.ts` on `takeHomeResults`.
-- [ ] 17. Create `web/src/hooks/use-debounced-recalc.ts` — 600 ms debounce; computes `budgetFingerprint`; skips when equal to `lastCalcFingerprint`.
-- [ ] 18. Create `web/src/hooks/use-budget-calculation.ts` — impact classifier (name/company = local only; salary = local tax recompute; location/expense = full recalc); cache-first via `budget.getByFingerprint`; persist via `upsertByFingerprint`.
-- [ ] 19. Wire hooks into `App.tsx`; show `isRecalculating` spinner only for async paths.
-- [ ] 20. Manual verify in DevTools Network: typing name = zero requests; typing salary = one request per 600 ms window; repeat identical salary = zero additional requests. Save screenshot to `.artifacts/T020-network-cache.png`.
-- [ ] 21. Tests: `use-debounced-recalc` fingerprint equality skips callback; `use-budget-calculation` impact classifier routes correctly.
+- [x] 15. Add `convex/budget.ts` — `getByFingerprint({ fingerprint })` query + `upsertByFingerprint` mutation, owner-scoped.
+- [x] 16. Add `budgetCalculations` table with `by_owner_fingerprint` index in `convex/schema.ts` (separate from submission-bound `takeHomeResults` to keep contracts clean).
+- [x] 17. Create `web/src/hooks/use-debounced-recalc.ts` — 600 ms debounce + fingerprint-equality skip using derived `isPending`.
+- [x] 18. Create `web/src/hooks/use-budget-calculation.ts` — local cache (`Map` via ref) → Convex `getByFingerprint` → local tax compute → `upsertByFingerprint` on miss. Non-impactful edits (name/company) don't alter the fingerprint, so no recalc fires.
+- [x] 19. Wire hooks into `App.tsx`: `hasCalculated` flips true on first Calculate click; debounced recalc thereafter; `RECALC…` badge appears on NET AFTER TAX while pending.
+- [ ] 20. Manual verify in DevTools Network (Phase 5 QA): typing name = zero requests; typing salary = one request per 600 ms window; repeat identical salary = zero additional requests. Save screenshot to `.artifacts/T020-network-cache.png`.
+- [ ] 21. Web has no vitest harness; automated hook tests deferred per AGENTS.md §6.6 note 3 to Phase 5 manual verification.
 
 ## Phase 4 — Monthly expenses CRUD
 

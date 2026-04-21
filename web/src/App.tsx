@@ -15,7 +15,10 @@ import {
   Zap, Star, AlertTriangle, ThumbsUp, ChevronRight
 } from 'lucide-react'
 import { calculateKenyanDeductions } from '@kazibudget/shared/lib/kenya-tax-calculator'
+import { createBudgetFingerprint } from '@kazibudget/shared/lib/budget-fingerprint'
 import { useBudgetForm } from '@/hooks/use-budget-form'
+import { useBudgetCalculation } from '@/hooks/use-budget-calculation'
+import { useDebouncedRecalc } from '@/hooks/use-debounced-recalc'
 import { ValidatedField } from '@/components/input/validated-field'
 
 type TabKey = 'input' | 'dashboard' | 'growth' | 'comparison'
@@ -75,20 +78,46 @@ export default function App() {
       experienceYears: userData.yearsOfExperience,
     })
 
+  const [hasCalculated, setHasCalculated] = useState(false)
+  const { calculate } = useBudgetCalculation()
+
+  const fingerprintInput = useMemo(
+    () => ({
+      grossSalary: Math.max(0, Number(values.grossSalary) || 0),
+      workLocation: values.workLocation ?? '',
+      homeArea: values.homeArea ?? '',
+      expenseItems: [] as { name: string; amount: number }[],
+    }),
+    [values.grossSalary, values.workLocation, values.homeArea],
+  )
+
+  const currentFingerprint = useMemo(
+    () => createBudgetFingerprint(fingerprintInput),
+    [fingerprintInput],
+  )
+
+  const { isPending: isRecalculating } = useDebouncedRecalc(
+    currentFingerprint,
+    () => { void calculate(fingerprintInput) },
+    { enabled: hasCalculated && isValid },
+  )
+
   const liveTax = useMemo(
-    () => calculateKenyanDeductions(Math.max(0, Number(values.grossSalary) || 0)),
-    [values.grossSalary],
+    () => calculateKenyanDeductions(fingerprintInput.grossSalary),
+    [fingerprintInput.grossSalary],
   )
 
   const inputBorderColor = (fieldError: string | undefined) =>
     fieldError ? COLORS.red : COLORS.black
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     if (!isValid) {
       triggerShake()
       void form.trigger()
       return
     }
+    await calculate(fingerprintInput)
+    setHasCalculated(true)
     setActiveTab('dashboard')
   }
 
@@ -264,9 +293,17 @@ export default function App() {
             </button>
           </div>
 
-          <div className="mt-5 p-4 text-center font-bold text-lg"
+          <div className="mt-5 p-4 text-center font-bold text-lg relative"
             style={{ border: `3px solid ${COLORS.black}`, backgroundColor: COLORS.black, color: COLORS.yellow, fontFamily: "'Work Sans', sans-serif", fontWeight: 900 }}>
             NET AFTER TAX: {formatKES(liveTax.netSalary)}
+            {isRecalculating && (
+              <span
+                className="absolute top-1 right-2 text-[10px] font-bold uppercase"
+                style={{ color: COLORS.yellow, letterSpacing: '0.15em', opacity: 0.7 }}
+              >
+                RECALC&hellip;
+              </span>
+            )}
           </div>
         </div>
       </div>

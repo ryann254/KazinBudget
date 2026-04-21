@@ -7,8 +7,8 @@
     "strict": true,
     "skipLibCheck": true,
     "allowJs": true,
-    "outDir": "./dist"
+    "noEmit": true
   },
   "include": ["./**/*.ts", "./**/*.tsx", "./_generated/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }

@@ -3,6 +3,7 @@ import { v } from "convex/values";
 
 export default defineSchema({
   submissions: defineTable({
+    owner_id: v.string(),
     name: v.string(),
     company_name: v.string(),
     company_location: v.string(),
@@ -17,9 +18,13 @@ export default defineSchema({
     ),
     created_at: v.number(),
     updated_at: v.number(),
-  }).index("by_status", ["status"]),
+  })
+    .index("by_owner", ["owner_id"])
+    .index("by_owner_status", ["owner_id", "status"])
+    .index("by_status", ["status"]),
 
   expenses: defineTable({
+    owner_id: v.string(),
     user_session_id: v.string(),
     name: v.string(),
     category: v.union(
@@ -36,6 +41,8 @@ export default defineSchema({
     created_at: v.number(),
     updated_at: v.number(),
   })
+    .index("by_owner_session", ["owner_id", "user_session_id"])
+    .index("by_owner", ["owner_id"])
     .index("by_session", ["user_session_id"])
     .index("by_session_category", ["user_session_id", "category"]),
 
@@ -103,4 +110,11 @@ export default defineSchema({
     scrapedAt: v.number(),
     expiresAt: v.number(),
   }).index("by_location", ["location"]),
+
+  budgetCalculations: defineTable({
+    owner_id: v.string(),
+    fingerprint: v.string(),
+    payload: v.string(),
+    created_at: v.number(),
+  }).index("by_owner_fingerprint", ["owner_id", "fingerprint"]),
 });
