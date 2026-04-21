@@ -18,13 +18,13 @@ Supersedes `openspec/implementation-phase/tasks.md` tasks T020–T057.
 
 ## Phase 2 — Editable input form
 
-- [ ] 8. Create `web/src/components/input/validated-field.tsx` — field wrapper with inline error; `shake` prop triggers 300 ms CSS animation.
-- [ ] 9. Add `@keyframes shake` + `.animate-shake` to `web/src/index.css` (reuse existing stylesheet; do not create new file if not needed).
-- [ ] 10. Create `web/src/components/input/budget-input-form.tsx` — react-hook-form + `BudgetInputSchema`. Fields: `fullName`, `company`, `workLocation`, `homeArea`, `grossSalary`, `experienceYears`.
-- [ ] 11. Extract Input-tab markup from `App.tsx` to consume `budget-input-form.tsx`.
-- [ ] 12. Wire `CALCULATE BUDGET`: `disabled` while form invalid; on invalid click, trigger shake on offending fields; on valid click, call `submissions.upsertByFingerprint` (added Phase 3) and set `hasCalculated = true`.
-- [ ] 13. Replace static tax cards with computed values from current `grossSalary` via shared tax utilities.
-- [ ] 14. Add component tests: invalid submit shows errors + shake; valid submit fires calc once.
+- [x] 8. Create `web/src/components/input/validated-field.tsx` — field wrapper with inline error; `shake` prop triggers 300 ms CSS animation.
+- [x] 9. Add `@keyframes shake` + `.animate-shake` to `web/src/index.css` (reuse existing stylesheet; do not create new file if not needed).
+- [x] 10. Create `web/src/hooks/use-budget-form.ts` — react-hook-form + `BudgetInputSchema` resolver. Fields: `fullName`, `company`, `workLocation`, `homeArea`, `grossSalary`, `experienceYears`. (Pivoted from extracting a whole form component: kept the tab layout in App.tsx and introduced a hook + field wrapper for minimal diff.)
+- [x] 11. Wire controlled inputs in-place in `App.tsx` (swap `readOnly` for `form.register(...)`; wrap each field in `ValidatedField`).
+- [x] 12. Wire `CALCULATE BUDGET`: `aria-disabled` while form invalid; on invalid click, trigger shake on offending fields; on valid click, set `hasCalculated = true` (Phase 3 wiring) and navigate to dashboard.
+- [x] 13. Replace static tax cards + NET AFTER TAX with live values computed via `calculateKenyanDeductions(grossSalary)`.
+- [ ] 14. Web has no vitest harness yet; per AGENTS.md §6.6 note 3, defer automated UI tests to Phase 5 manual verification with screenshots.
 
 ## Phase 3 — Recalculation + cache
 

@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts'
 import { useUser, UserButton } from "@clerk/clerk-react"
 import {
-  userData, taxBreakdown, expenseBreakdown, dashboardSummary,
+  userData, expenseBreakdown, dashboardSummary,
   expenseChartData, growthProjections, growthChartData,
   salaryComparison, salaryDistributionData, travelDetails,
   rentDetails, foodDetails, formatKES, growthAssumptions
@@ -14,6 +14,9 @@ import {
   Home, User, BarChart3, TrendingUp, Users,
   Zap, Star, AlertTriangle, ThumbsUp, ChevronRight
 } from 'lucide-react'
+import { calculateKenyanDeductions } from '@kazibudget/shared/lib/kenya-tax-calculator'
+import { useBudgetForm } from '@/hooks/use-budget-form'
+import { ValidatedField } from '@/components/input/validated-field'
 
 type TabKey = 'input' | 'dashboard' | 'growth' | 'comparison'
 
@@ -53,7 +56,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('input')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [showNavScroll, setShowNavScroll] = useState(true)
-
   const fullName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
   const userDisplayName =
     fullName || user?.primaryEmailAddress?.emailAddress || userData.name
@@ -62,6 +64,33 @@ export default function App() {
     typeof userCompanyMetadata === "string" && userCompanyMetadata.trim() !== ""
       ? userCompanyMetadata
       : userData.company
+
+  const { form, errors, isValid, values, isShaking, triggerShake } =
+    useBudgetForm({
+      fullName: userDisplayName,
+      company: userCompany,
+      workLocation: userData.companyLocation,
+      homeArea: userData.residentialArea,
+      grossSalary: userData.monthlySalary,
+      experienceYears: userData.yearsOfExperience,
+    })
+
+  const liveTax = useMemo(
+    () => calculateKenyanDeductions(Math.max(0, Number(values.grossSalary) || 0)),
+    [values.grossSalary],
+  )
+
+  const inputBorderColor = (fieldError: string | undefined) =>
+    fieldError ? COLORS.red : COLORS.black
+
+  const handleCalculate = () => {
+    if (!isValid) {
+      triggerShake()
+      void form.trigger()
+      return
+    }
+    setActiveTab('dashboard')
+  }
 
   const cardStyle = (id: string, bg: string = COLORS.white) => ({
     ...((hoveredCard === id) ? brutalistCardHover : brutalistCard),
@@ -87,22 +116,35 @@ export default function App() {
         </div>
         <div className="p-6 sm:p-8 pt-10" style={{ ...brutalistCard, backgroundColor: COLORS.white, borderLeft: `4px solid ${COLORS.blue}` }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              { label: 'FULL NAME', value: userData.name },
-              { label: 'COMPANY', value: userData.company },
-              { label: 'WORK LOCATION', value: userData.companyLocation },
-              { label: 'HOME AREA', value: userData.residentialArea },
-            ].map((field) => (
-              <div key={field.label}>
-                <label className="block text-xs font-extrabold uppercase mb-2"
-                  style={{ fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.15em' }}>{field.label}</label>
-                <input
-                  type="text" readOnly value={field.value}
-                  className="w-full px-4 py-3 font-semibold text-sm outline-none"
-                  style={{ border: `3px solid ${COLORS.black}`, backgroundColor: COLORS.white, fontFamily: "'Work Sans', sans-serif" }}
-                />
-              </div>
-            ))}
+            {([
+              { name: 'fullName' as const, label: 'FULL NAME' },
+              { name: 'company' as const, label: 'COMPANY' },
+              { name: 'workLocation' as const, label: 'WORK LOCATION' },
+              { name: 'homeArea' as const, label: 'HOME AREA' },
+            ]).map((field) => {
+              const fieldError = errors[field.name]?.message
+              const shouldShake = isShaking && Boolean(fieldError)
+              return (
+                <ValidatedField
+                  key={field.name}
+                  label={field.label}
+                  error={fieldError}
+                  shake={shouldShake}
+                >
+                  <input
+                    type="text"
+                    {...form.register(field.name)}
+                    aria-invalid={Boolean(fieldError)}
+                    className="w-full px-4 py-3 font-semibold text-sm outline-none"
+                    style={{
+                      border: `3px solid ${inputBorderColor(fieldError)}`,
+                      backgroundColor: COLORS.white,
+                      fontFamily: "'Work Sans', sans-serif",
+                    }}
+                  />
+                </ValidatedField>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -121,33 +163,56 @@ export default function App() {
         </div>
         <div className="p-6 sm:p-8 pt-10" style={{ ...brutalistCard, backgroundColor: COLORS.white, borderLeft: `4px solid ${COLORS.red}` }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-xs font-extrabold uppercase mb-2"
-                style={{ fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.15em' }}>GROSS SALARY (KES)</label>
+            <ValidatedField
+              label="GROSS SALARY (KES)"
+              error={errors.grossSalary?.message}
+              shake={isShaking && Boolean(errors.grossSalary)}
+            >
               <input
-                type="text" readOnly value={formatKES(userData.monthlySalary)}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1000}
+                {...form.register('grossSalary', { valueAsNumber: true })}
+                aria-invalid={Boolean(errors.grossSalary)}
                 className="w-full px-4 py-3 font-bold text-lg outline-none"
-                style={{ border: `3px solid ${COLORS.black}`, backgroundColor: COLORS.white, fontFamily: "'Work Sans', sans-serif" }}
+                style={{
+                  border: `3px solid ${inputBorderColor(errors.grossSalary?.message)}`,
+                  backgroundColor: COLORS.white,
+                  fontFamily: "'Work Sans', sans-serif",
+                }}
               />
-            </div>
-            <div>
-              <label className="block text-xs font-extrabold uppercase mb-2"
-                style={{ fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.15em' }}>EXPERIENCE</label>
+            </ValidatedField>
+            <ValidatedField
+              label="EXPERIENCE (YEARS)"
+              error={errors.experienceYears?.message}
+              shake={isShaking && Boolean(errors.experienceYears)}
+            >
               <input
-                type="text" readOnly value={`${userData.yearsOfExperience} years`}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={50}
+                step={1}
+                {...form.register('experienceYears', { valueAsNumber: true })}
+                aria-invalid={Boolean(errors.experienceYears)}
                 className="w-full px-4 py-3 font-bold text-lg outline-none"
-                style={{ border: `3px solid ${COLORS.black}`, backgroundColor: COLORS.white, fontFamily: "'Work Sans', sans-serif" }}
+                style={{
+                  border: `3px solid ${inputBorderColor(errors.experienceYears?.message)}`,
+                  backgroundColor: COLORS.white,
+                  fontFamily: "'Work Sans', sans-serif",
+                }}
               />
-            </div>
+            </ValidatedField>
           </div>
 
           {/* Tax Breakdown */}
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
-              { label: 'PAYE', amount: taxBreakdown.paye, bg: COLORS.yellow },
-              { label: 'NSSF', amount: taxBreakdown.nssf, bg: COLORS.blue },
-              { label: 'SHIF', amount: taxBreakdown.shif, bg: COLORS.teal },
-              { label: 'HOUSING', amount: taxBreakdown.housingLevy, bg: COLORS.muted },
+              { label: 'PAYE', amount: liveTax.paye, bg: COLORS.yellow },
+              { label: 'NSSF', amount: liveTax.nssfTotal, bg: COLORS.blue },
+              { label: 'SHIF', amount: liveTax.shif, bg: COLORS.teal },
+              { label: 'HOUSING', amount: liveTax.housingLevy, bg: COLORS.muted },
             ].map((item) => (
               <div
                 key={item.label}
@@ -170,25 +235,29 @@ export default function App() {
           {/* Calculate Budget Button */}
           <div className="mt-6 flex justify-center">
             <button
-              onClick={() => setActiveTab('dashboard')}
-              className="w-full sm:w-auto px-10 py-4 font-extrabold text-sm uppercase"
+              type="button"
+              onClick={handleCalculate}
+              aria-disabled={!isValid}
+              className={`w-full sm:w-auto px-10 py-4 font-extrabold text-sm uppercase ${isShaking ? 'animate-shake' : ''}`}
               style={{
                 border: `3px solid ${COLORS.black}`,
-                backgroundColor: COLORS.red,
+                backgroundColor: isValid ? COLORS.red : COLORS.muted,
                 color: COLORS.white,
                 fontFamily: "'Work Sans', sans-serif",
                 letterSpacing: '0.15em',
                 boxShadow: `4px 4px 0 ${COLORS.black}`,
-                cursor: 'pointer',
+                cursor: isValid ? 'pointer' : 'not-allowed',
+                opacity: isValid ? 1 : 0.75,
                 transition: 'all 0.1s ease',
               }}
               onMouseDown={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = `1px 1px 0 ${COLORS.black}`;
-                (e.currentTarget as HTMLButtonElement).style.transform = 'translate(3px, 3px)';
+                if (!isValid) return
+                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = `1px 1px 0 ${COLORS.black}`
+                ;(e.currentTarget as HTMLButtonElement).style.transform = 'translate(3px, 3px)'
               }}
               onMouseUp={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.boxShadow = `4px 4px 0 ${COLORS.black}`;
-                (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+                ;(e.currentTarget as HTMLButtonElement).style.boxShadow = `4px 4px 0 ${COLORS.black}`
+                ;(e.currentTarget as HTMLButtonElement).style.transform = 'none'
               }}
             >
               CALCULATE BUDGET
@@ -197,7 +266,7 @@ export default function App() {
 
           <div className="mt-5 p-4 text-center font-bold text-lg"
             style={{ border: `3px solid ${COLORS.black}`, backgroundColor: COLORS.black, color: COLORS.yellow, fontFamily: "'Work Sans', sans-serif", fontWeight: 900 }}>
-            NET AFTER TAX: {formatKES(taxBreakdown.netAfterTax)}
+            NET AFTER TAX: {formatKES(liveTax.netSalary)}
           </div>
         </div>
       </div>
