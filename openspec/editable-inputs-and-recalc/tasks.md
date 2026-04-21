@@ -11,9 +11,9 @@ Supersedes `openspec/implementation-phase/tasks.md` tasks T020–T057.
 
 ## Phase 1 — Clerk sign-in fix
 
-- [ ] 4. Add `web/src/lib/session-recovery.ts`: detect Clerk `/sessions/.../touch` 404, call `signOut({ redirectUrl: '/' })`, clear `__clerk_*` keys from `localStorage`.
-- [ ] 5. Mount recovery hook at the root of `AuthGate` (`web/src/components/auth/auth-gate.tsx`). Verify `SignInButton` is inside `<Unauthenticated>` only.
-- [ ] 6. Mount `<UserButton afterSignOutUrl="/"/>` in the header area of the authed shell in `web/src/App.tsx`.
+- [x] 4. Add `web/src/lib/session-recovery.ts`: detect Clerk `/sessions/.../touch` 404, call `signOut({ redirectUrl: '/' })`, clear `__clerk_*` keys from `localStorage`.
+- [x] 5. Mount recovery hook at the root of `AuthGate` (`web/src/components/auth/auth-gate.tsx`). Verify `SignInButton` is inside `<Unauthenticated>` only.
+- [x] 6. Mount `<UserButton afterSignOutUrl="/"/>` in the header area of the authed shell in `web/src/App.tsx`.
 - [ ] 7. Manual verify with stale dev cookie: refresh → recovery signs out → sign-in renders → sign in succeeds. Save screenshot to `.artifacts/T004-clerk-signin.png`.
 
 ## Phase 2 — Editable input form

@@ -3,6 +3,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
 } from 'recharts'
+import { useUser, UserButton } from "@clerk/clerk-react"
 import {
   userData, taxBreakdown, expenseBreakdown, dashboardSummary,
   expenseChartData, growthProjections, growthChartData,
@@ -48,9 +49,19 @@ const brutalistCardHover = {
 }
 
 export default function App() {
+  const { user } = useUser()
   const [activeTab, setActiveTab] = useState<TabKey>('input')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [showNavScroll, setShowNavScroll] = useState(true)
+
+  const fullName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
+  const userDisplayName =
+    fullName || user?.primaryEmailAddress?.emailAddress || userData.name
+  const userCompanyMetadata = user?.unsafeMetadata?.["company"]
+  const userCompany =
+    typeof userCompanyMetadata === "string" && userCompanyMetadata.trim() !== ""
+      ? userCompanyMetadata
+      : userData.company
 
   const cardStyle = (id: string, bg: string = COLORS.white) => ({
     ...((hoveredCard === id) ? brutalistCardHover : brutalistCard),
@@ -935,16 +946,19 @@ export default function App() {
             KAZI<span style={{ color: COLORS.red }}>&amp;BUDGET</span>
           </h1>
 
-          {/* User Badge */}
-          <div
-            className="px-3 py-1.5 text-xs font-bold hidden md:flex items-center gap-2"
-            style={{
-              border: `2px solid ${COLORS.yellow}`, color: COLORS.yellow,
-              fontFamily: "'Work Sans', sans-serif", transform: 'rotate(1deg)',
-            }}
-          >
-            <User size={12} />
-            {userData.name} &mdash; {userData.company}
+          <div className="flex items-center gap-3">
+            {/* User Badge */}
+            <div
+              className="px-3 py-1.5 text-xs font-bold hidden md:flex items-center gap-2"
+              style={{
+                border: `2px solid ${COLORS.yellow}`, color: COLORS.yellow,
+                fontFamily: "'Work Sans', sans-serif", transform: 'rotate(1deg)',
+              }}
+            >
+              <User size={12} />
+              {userDisplayName} &mdash; {userCompany}
+            </div>
+            <UserButton />
           </div>
         </div>
       </header>
