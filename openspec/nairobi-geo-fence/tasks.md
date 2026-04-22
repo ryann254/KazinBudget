@@ -2,16 +2,16 @@
 
 ## Setup
 
-- [ ] 1. Install `fuse.js` as a dependency in `packages/shared`: `pnpm add fuse.js --filter shared`
+- [x] 1. Install `fuse.js` as a dependency in `packages/shared`: `pnpm add fuse.js --filter shared`
 
 ## Data Layer (packages/shared/src/geo/)
 
-- [ ] 2. Create `packages/shared/src/geo/types.ts` with the following types:
+- [x] 2. Create `packages/shared/src/geo/types.ts` with the following types:
   - `NairobiZone` union type: `"PREMIUM" | "MIDDLE" | "BUDGET" | "SATELLITE"`
   - `NairobiArea` type with fields: `name: string`, `zone: NairobiZone`, `aliases: string[]` (optional common aliases like "TRM" for Thika Road Mall area)
   - `AreaLookupResult` type with fields: `area: NairobiArea`, `score: number`
 
-- [ ] 3. Create `packages/shared/src/geo/nairobi-areas.ts` with a `const` array (using `as const` where appropriate) of all Nairobi areas organized by zone:
+- [x] 3. Create `packages/shared/src/geo/nairobi-areas.ts` with a `const` array (using `as const` where appropriate) of all Nairobi areas organized by zone:
   - **Premium (10):** Westlands, Kilimani, Kileleshwa, Lavington, Parklands, Runda, Karen, Muthaiga, Spring Valley, Loresho
   - **Middle (11):** South B, South C, Langata, Embakasi, Donholm, Buruburu, Roysambu, Kasarani, Dagoretti, Imara Daima, Komarock
   - **Budget (8):** Kahawa West, Githurai, Zimmerman, Umoja, Pipeline, Utawala, Syokimau, Lucky Summer
@@ -19,7 +19,7 @@
   - Add common aliases for areas where applicable (e.g., "CBD" for "Nairobi CBD", "TRM" for the Thika Road Mall area near Roysambu)
   - Export a flat array `NAIROBI_AREAS` and a lookup map `NAIROBI_AREA_MAP` keyed by lowercase area name
 
-- [ ] 4. Create `packages/shared/src/geo/area-matcher.ts`:
+- [x] 4. Create `packages/shared/src/geo/area-matcher.ts`:
   - Initialize a Fuse.js instance with the `NAIROBI_AREAS` array, searching on `name` and `aliases` fields
   - Set Fuse.js options: `threshold: 0.3`, `distance: 100`, `keys: ["name", "aliases"]`
   - Export `searchAreas(query: string): AreaLookupResult[]` that returns top 5 fuzzy matches with scores
@@ -27,7 +27,7 @@
   - Export `isValidArea(query: string): boolean` that returns true if the query matches any area with high confidence (score < 0.2)
   - Handle edge cases: empty string returns empty array, whitespace is trimmed, input is lowercased
 
-- [ ] 5. Create `packages/shared/src/geo/validation.ts`:
+- [x] 5. Create `packages/shared/src/geo/validation.ts`:
   - Define `locationSchema` using Zod: `z.string().min(1, "Location is required").refine(...)` that validates input against `isValidArea()`
   - The refine error message should be: "We're not in this area yet. Please select a supported Nairobi location."
   - Define `resolvedLocationSchema` that transforms a valid string input into an object with `{ name, zone }` using `findBestMatch()`
@@ -35,7 +35,7 @@
 
 ## UI Components (packages/web/src/components/)
 
-- [ ] 6. Create `packages/web/src/components/location-combobox.tsx`:
+- [x] 6. Create `packages/web/src/components/location-combobox.tsx`:
   - Use shadcn/ui `Command` (cmdk) component as the base for autocomplete
   - Accept props: `value: string`, `onChange: (value: string, zone: NairobiZone) => void`, `placeholder: string`, `label: string`
   - On input change (debounced 300ms), call `searchAreas()` and display results in the dropdown
@@ -44,7 +44,7 @@
   - If user types something with no matches, show inline text: "No matching areas found"
   - Use named export only (no default export per project conventions)
 
-- [ ] 7. Create `packages/web/src/components/coming-soon-banner.tsx`:
+- [x] 7. Create `packages/web/src/components/coming-soon-banner.tsx`:
   - Accept props: `location: string` (the unsupported location the user typed)
   - Render a styled card/banner with:
     - A map pin icon (use Lucide `MapPinOff` or similar from the icon set already in shadcn)
@@ -69,7 +69,7 @@
 
 ## Tests
 
-- [ ] 10. Create `packages/shared/src/geo/__tests__/area-matcher.test.ts`:
+- [x] 10. Create `packages/shared/src/geo/__tests__/area-matcher.test.ts`:
   - Test exact match: "Westlands" returns Westlands with PREMIUM zone
   - Test fuzzy match: "Westland" (missing 's') returns Westlands
   - Test fuzzy match: "Kilimni" (typo) returns Kilimani
@@ -83,7 +83,7 @@
   - Test `isValidArea()` returns true for exact known area
   - Test `isValidArea()` returns false for unknown city
 
-- [ ] 11. Create `packages/shared/src/geo/__tests__/validation.test.ts`:
+- [x] 11. Create `packages/shared/src/geo/__tests__/validation.test.ts`:
   - Test valid location passes `locationSchema`
   - Test invalid location ("Mombasa") fails with correct error message
   - Test empty string fails with "Location is required"

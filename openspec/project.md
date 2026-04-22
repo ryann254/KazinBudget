@@ -32,7 +32,6 @@ WorkPlace Budgeting is a simple web app/tool that allows new and existing job se
 
 ### File Organization
 ```
-packages/
 ├── convex/           # Convex service
 │   ├── api/
 │   │   ├── routes/

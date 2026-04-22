@@ -6,7 +6,7 @@ Numbered implementation tasks for the take-home calculator orchestration engine.
 
 ## Phase 1: Shared Types and Pure Aggregator
 
-- [ ] **1. Create Zod schemas and types for the take-home calculator**
+- [x] **1. Create Zod schemas and types for the take-home calculator**
   Create `packages/shared/lib/take-home-types.ts`. Define and export:
   - `TakeHomeInputSchema`: `submissionId` (string), `name` (string), `companyName` (string), `companyLocation` (string), `companyLat` (number, optional), `companyLng` (number, optional), `residentialArea` (string), `yearsOfExperience` (number, int, min 0), `monthlyGrossSalary` (number, positive), `bedroomPreference` (enum: `"bedsitter"`, `"1br"`, `"2br"`, default `"1br"`), `transportMode` (enum: `"matatu"`, `"boda"`, `"uber"`, `"car"`, `"brt"`, default `"matatu"`).
   - `ExpenseItemSchema`: `category` (enum: `"tax"`, `"rent"`, `"food"`, `"transport"`, `"custom"`), `label` (string), `amountKES` (number, min 0), `source` (enum: `"live"`, `"cached"`, `"fallback"`, `"manual"`, `"unavailable"`), `confidence` (enum: `"high"`, `"medium"`, `"low"`), `isEditable` (boolean).
@@ -14,7 +14,7 @@ Numbered implementation tasks for the take-home calculator orchestration engine.
   - `TakeHomeResultSchema`: `submissionId` (string), `grossSalary` (number), `taxBreakdown` (TaxSummarySchema), `expenses` (array of ExpenseItemSchema), `totalTax`, `totalLivingCosts`, `totalCustomExpenses`, `totalDeductions`, `takeHomeSalary` (all numbers), `calculatedAt` (number), `expiresAt` (number).
   - Export inferred types: `TakeHomeInput`, `ExpenseItem`, `TaxSummary`, `TakeHomeResult`.
 
-- [ ] **2. Write unit tests for the Zod schemas**
+- [x] **2. Write unit tests for the Zod schemas**
   Create `packages/shared/lib/__tests__/take-home-types.test.ts`. Test cases:
   - Valid `TakeHomeInput` with all fields passes.
   - Missing `monthlyGrossSalary` fails.
@@ -28,10 +28,10 @@ Numbered implementation tasks for the take-home calculator orchestration engine.
   - Valid `TakeHomeResult` passes.
   - `TakeHomeResult` with missing `taxBreakdown` fails.
 
-- [ ] **3. Run schema tests and confirm they pass**
+- [x] **3. Run schema tests and confirm they pass**
   Execute `pnpm test:unit -- packages/shared/lib/__tests__/take-home-types.test.ts`.
 
-- [ ] **4. Create the pure aggregator function**
+- [x] **4. Create the pure aggregator function**
   Create `packages/shared/lib/take-home-aggregator.ts`. Export a single pure function:
   ```
   aggregateTakeHome(params: {
@@ -54,7 +54,7 @@ Numbered implementation tasks for the take-home calculator orchestration engine.
   - Set `calculatedAt = Date.now()` and `expiresAt = Date.now() + 24 * 60 * 60 * 1000`.
   - Return the full `TakeHomeResult` object.
 
-- [ ] **5. Write unit tests for the aggregator**
+- [x] **5. Write unit tests for the aggregator**
   Create `packages/shared/lib/__tests__/take-home-aggregator.test.ts`. Test cases:
   - Basic: gross 100,000; tax totaling 20,000; rent 15,000; food 8,800; transport 4,400; no custom => take-home 51,800.
   - Zero salary: all inputs zero => take-home 0.
@@ -65,33 +65,33 @@ Numbered implementation tasks for the take-home calculator orchestration engine.
   - Expenses array contains correct number of items (4 tax items + 3 living items + N custom items).
   - Each expense item has valid `category`, `source`, and `confidence` fields.
 
-- [ ] **6. Run aggregator tests and confirm they pass**
+- [x] **6. Run aggregator tests and confirm they pass**
   Execute `pnpm test:unit -- packages/shared/lib/__tests__/take-home-aggregator.test.ts`.
 
 ---
 
 ## Phase 2: Convex Schema and Database Layer
 
-- [ ] **7. Add `takeHomeResults` table to Convex schema**
+- [x] **7. Add `takeHomeResults` table to Convex schema**
   Edit `convex/schema.ts`. Add the `takeHomeResults` table with fields: `submissionId` (id referencing `"submissions"`), `grossSalary` (number), `paye` (number), `nssfTotal` (number), `shif` (number), `housingLevy` (number), `totalTax` (number), `rentCost` (number), `rentSource` (string), `rentConfidence` (string), `foodCost` (number), `foodSource` (string), `foodConfidence` (string), `transportCost` (number), `transportSource` (string), `transportConfidence` (string), `transportMode` (string), `customExpenses` (array of objects with `label: string`, `amountKES: number`), `totalCustomExpenses` (number), `totalLivingCosts` (number), `totalDeductions` (number), `takeHomeSalary` (number), `calculatedAt` (number), `expiresAt` (number). Add index `"by_submission"` on `["submissionId"]`.
 
 - [ ] **8. Push Convex schema and verify deployment**
   Run `npx convex dev` and confirm the `takeHomeResults` table is created without errors.
 
-- [ ] **9. Create the internal query for cache lookup**
+- [x] **9. Create the internal query for cache lookup**
   Create `convex/takeHome/getCachedResult.ts`. Export an `internalQuery` named `getCachedResult` that accepts `{ submissionId }`, queries the `takeHomeResults` table using the `"by_submission"` index, and returns the first result (or `null`).
 
-- [ ] **10. Create the internal mutation for storing results**
+- [x] **10. Create the internal mutation for storing results**
   Create `convex/takeHome/storeResult.ts`. Export an `internalMutation` named `storeResult` that accepts all fields of the `takeHomeResults` table. It should: query for an existing result with the same `submissionId`, delete it if found, then insert the new result with `calculatedAt` set to `Date.now()` and `expiresAt` set to `Date.now() + 24 * 60 * 60 * 1000`.
 
-- [ ] **11. Create the public query for reading results**
+- [x] **11. Create the public query for reading results**
   Create `convex/takeHome/getResult.ts`. Export a `query` named `getResult` that accepts `{ submissionId }` (as `v.id("submissions")`), queries the `takeHomeResults` table by the `"by_submission"` index, orders descending, and returns the first result. This is the query the frontend subscribes to.
 
 ---
 
 ## Phase 3: Lookup Helper Functions
 
-- [ ] **12. Create the lookup utilities module**
+- [x] **12. Create the lookup utilities module**
   Create `convex/lib/lookupUtils.ts`. Export:
   - `extractResult<T>(settled: PromiseSettledResult<T>, fallback: T, fallbackSource: string): { data: T; source: string; confidence: string }` -- returns `{ data: settled.value, source: "live", confidence: "high" }` on fulfilled, or `{ data: fallback, source: fallbackSource, confidence: "low" }` on rejected. Log the error on rejection.
   - `withTimeout<T>(promise: Promise<T>, ms: number): Promise<T>` -- wraps a promise with a timeout. If the promise does not resolve within `ms` milliseconds, reject with a `TimeoutError`.
