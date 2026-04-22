@@ -1,17 +1,17 @@
 // Dashboard timeline at 30 fps.
-// Total: 1515 frames / 30 = 50.5s.
+// Tightened pacing pass — total: 1080 frames / 30 = 36s.
 
 export const FPS = 30;
 
 export const SCENES = {
-  calcIntro: { start: 0, duration: 90 }, // 0 – 3s click Calculate → flash
-  cards: { start: 90, duration: 480 }, // 3 – 19s (arrive + cycle 4 cards + savings)
-  pie: { start: 570, duration: 495 }, // 19 – 35.5s (arrive + cycle 5 items)
-  rent: { start: 1065, duration: 240 }, // 35.5 – 43.5s
-  food: { start: 1305, duration: 210 }, // 43.5 – 50.5s
+  calcIntro: { start: 0, duration: 60 }, // 0 – 2s click Calculate → flash
+  cards: { start: 60, duration: 300 }, // 2 – 12s (arrive + cycle 4 cards + savings)
+  pie: { start: 360, duration: 360 }, // 12 – 24s (arrive + cycle 6 items)
+  rent: { start: 720, duration: 180 }, // 24 – 30s
+  food: { start: 900, duration: 180 }, // 30 – 36s
 } as const;
 
-export const TOTAL_FRAMES = 1515;
+export const TOTAL_FRAMES = 1080;
 
 // ── Layout heights ─────────────────────────────────────────
 export const LAYOUT = {
@@ -83,7 +83,7 @@ export const PIE_ITEMS = [
 
 // Which items to cycle-highlight during the pie scene
 export const PIE_CYCLE_INDICES = [0, 1, 2, 3, 4, 5] as const;
-export const PIE_CYCLE_PER_ITEM = 45; // frames per item highlight
+export const PIE_CYCLE_PER_ITEM = 30; // frames per item highlight
 
 // ── Rent scene data (relative to rent.start) ───────────────
 export const RENT_BEFORE = {
@@ -104,11 +104,11 @@ export const RENT_AFTER = {
     { type: "2 BEDROOM", median: 22_000 },
   ],
 } as const;
-export const RENT_EDIT_ERASE_AT = 45;
-export const RENT_EDIT_RETYPE_AT = 90;
-export const RENT_EDIT_CHAR_FRAMES = 6;
-export const RENT_RECALC_AT = 140;
-export const RENT_RECALC_DURATION = 60;
+export const RENT_EDIT_ERASE_AT = 20;
+export const RENT_EDIT_RETYPE_AT = 45;
+export const RENT_EDIT_CHAR_FRAMES = 4;
+export const RENT_RECALC_AT = 80;
+export const RENT_RECALC_DURATION = 40;
 
 // ── Food scene data (relative to food.start) ───────────────
 export const FOOD_BEFORE = {
@@ -133,8 +133,8 @@ export const FOOD_AFTER = {
     { name: "Mandazi + Chai", avgMeal: 70 },
   ],
 } as const;
-export const FOOD_EDIT_ERASE_AT = 45;
-export const FOOD_EDIT_RETYPE_AT = 90;
-export const FOOD_EDIT_CHAR_FRAMES = 6;
-export const FOOD_RECALC_AT = 135;
-export const FOOD_RECALC_DURATION = 60;
+export const FOOD_EDIT_ERASE_AT = 20;
+export const FOOD_EDIT_RETYPE_AT = 45;
+export const FOOD_EDIT_CHAR_FRAMES = 4;
+export const FOOD_RECALC_AT = 80;
+export const FOOD_RECALC_DURATION = 40;

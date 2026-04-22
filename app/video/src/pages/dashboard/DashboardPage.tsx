@@ -55,8 +55,8 @@ const STAMP_STYLE: React.CSSProperties = {
 
 function sectionFocus(frame: number): Record<Section, number> {
   const focusAt = (start: number, duration: number) => {
-    const rampIn = 30;
-    const rampOut = 30;
+    const rampIn = 15;
+    const rampOut = 15;
     if (frame < start) return 0;
     if (frame < start + rampIn) {
       return interpolate(frame, [start, start + rampIn], [0, 1], {
@@ -96,15 +96,15 @@ function cameraScrollY(frame: number): number {
   const waypoints = [
     { f: 0, y: CAMERA_Y.cards },
     { f: SCENES.calcIntro.duration, y: CAMERA_Y.cards },
-    { f: SCENES.cards.start + 30, y: CAMERA_Y.cards },
-    { f: SCENES.cards.start + SCENES.cards.duration * 0.7, y: CAMERA_Y.cards },
-    { f: SCENES.cards.start + SCENES.cards.duration * 0.85, y: CAMERA_Y.savings },
+    { f: SCENES.cards.start + 15, y: CAMERA_Y.cards },
+    { f: SCENES.cards.start + SCENES.cards.duration * 0.65, y: CAMERA_Y.cards },
+    { f: SCENES.cards.start + SCENES.cards.duration * 0.78, y: CAMERA_Y.savings },
     { f: SCENES.cards.start + SCENES.cards.duration, y: CAMERA_Y.savings },
-    { f: SCENES.pie.start + 30, y: CAMERA_Y.pie },
-    { f: SCENES.pie.start + SCENES.pie.duration - 30, y: CAMERA_Y.pie },
-    { f: SCENES.rent.start + 30, y: CAMERA_Y.rent },
-    { f: SCENES.rent.start + SCENES.rent.duration - 30, y: CAMERA_Y.rent },
-    { f: SCENES.food.start + 30, y: CAMERA_Y.food },
+    { f: SCENES.pie.start + 18, y: CAMERA_Y.pie },
+    { f: SCENES.pie.start + SCENES.pie.duration - 18, y: CAMERA_Y.pie },
+    { f: SCENES.rent.start + 18, y: CAMERA_Y.rent },
+    { f: SCENES.rent.start + SCENES.rent.duration - 18, y: CAMERA_Y.rent },
+    { f: SCENES.food.start + 18, y: CAMERA_Y.food },
     { f: SCENES.food.start + SCENES.food.duration, y: CAMERA_Y.food },
   ];
   return interpolate(
@@ -433,30 +433,30 @@ export const DashboardPage: React.FC = () => {
 
   // ── Calc intro (press + white flash) ─────────────────────
   const calcIntroStart = 0;
-  const calcPressStart = calcIntroStart + 30;
-  const calcFlashStart = calcIntroStart + 60;
-  const calcFlashEnd = calcIntroStart + 90;
+  const calcPressStart = calcIntroStart + 18;
+  const calcFlashStart = calcIntroStart + 36;
+  const calcFlashEnd = calcIntroStart + 60;
   const calcButtonHighlight = interpolate(
     frame,
-    [calcIntroStart, calcIntroStart + 18],
+    [calcIntroStart, calcIntroStart + 12],
     [0, 1],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
   const calcButtonPress = interpolate(
     frame,
-    [calcPressStart, calcPressStart + 6, calcPressStart + 18],
+    [calcPressStart, calcPressStart + 4, calcPressStart + 14],
     [0, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
   const whiteFlash = interpolate(
     frame,
-    [calcFlashStart, calcFlashStart + 6, calcFlashEnd],
+    [calcFlashStart, calcFlashStart + 4, calcFlashEnd],
     [0, 1, 0],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
   const dashboardEmergeOpacity = interpolate(
     frame,
-    [calcFlashStart + 4, calcFlashEnd + 15],
+    [calcFlashStart + 2, calcFlashEnd + 10],
     [0, 1],
     { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
   );
@@ -466,7 +466,7 @@ export const DashboardPage: React.FC = () => {
   const cardReveal = (i: number) =>
     interpolate(
       frame,
-      [cardsStart + i * 8, cardsStart + i * 8 + 30],
+      [cardsStart + i * 5, cardsStart + i * 5 + 18],
       [0, 1],
       {
         easing: easeOutExpo,
@@ -474,22 +474,22 @@ export const DashboardPage: React.FC = () => {
         extrapolateRight: "clamp",
       },
     );
-  const grossVal = countUp(frame, cardsStart, 60, GROSS);
-  const deductionsVal = countUp(frame, cardsStart + 8, 60, DEDUCTIONS);
-  const expensesVal = countUp(frame, cardsStart + 16, 60, EXPENSES_TOTAL);
-  const takehomeVal = countUp(frame, cardsStart + 24, 60, TAKE_HOME);
+  const grossVal = countUp(frame, cardsStart, 35, GROSS);
+  const deductionsVal = countUp(frame, cardsStart + 5, 35, DEDUCTIONS);
+  const expensesVal = countUp(frame, cardsStart + 10, 35, EXPENSES_TOTAL);
+  const takehomeVal = countUp(frame, cardsStart + 15, 35, TAKE_HOME);
 
-  // Card highlight cycle: each card highlighted for 75 frames inside cards scene
-  const cardCycleStart = cardsStart + 75;
-  const cardCycleDuration = 75;
+  // Card highlight cycle starts right after arrival.
+  const cardCycleStart = cardsStart + 30;
+  const cardCycleDuration = 40;
   const highlightFor = (i: number) => {
     const start = cardCycleStart + i * cardCycleDuration;
     return interpolate(
       frame,
       [
-        start - 10,
+        start - 6,
         start,
-        start + cardCycleDuration - 10,
+        start + cardCycleDuration - 6,
         start + cardCycleDuration,
       ],
       [0, 1, 1, 0],
@@ -502,11 +502,11 @@ export const DashboardPage: React.FC = () => {
   const takeHL = highlightFor(3);
 
   // Savings rate pulses near the end of cards scene
-  const savingsPulseAt = cardsStart + SCENES.cards.duration * 0.8;
-  const savingsScale = pulse(frame, savingsPulseAt, 30);
+  const savingsPulseAt = cardsStart + SCENES.cards.duration * 0.82;
+  const savingsScale = pulse(frame, savingsPulseAt, 22);
   const savingsReveal = interpolate(
     frame,
-    [savingsPulseAt - 30, savingsPulseAt],
+    [savingsPulseAt - 18, savingsPulseAt],
     [0, 1],
     {
       easing: easeOutExpo,
@@ -519,7 +519,7 @@ export const DashboardPage: React.FC = () => {
   const pieStart = SCENES.pie.start;
   const pieIntroProgress = interpolate(
     frame,
-    [pieStart, pieStart + 60],
+    [pieStart, pieStart + 30],
     [0, 1],
     {
       easing: easeOutExpo,
@@ -527,7 +527,7 @@ export const DashboardPage: React.FC = () => {
       extrapolateRight: "clamp",
     },
   );
-  const pieCycleStart = pieStart + 90;
+  const pieCycleStart = pieStart + 35;
   const pieItemFrame = frame - pieCycleStart;
   let highlightedPieIdx: number | null = null;
   if (pieItemFrame >= 0) {
@@ -540,7 +540,7 @@ export const DashboardPage: React.FC = () => {
   // ── Rent scene ───────────────────────────────────────────
   const rentStart = SCENES.rent.start;
   const rentEraseStart = rentStart + RENT_EDIT_ERASE_AT;
-  const rentEraseDuration = 25;
+  const rentEraseDuration = 18;
   const rentRetypeStart = rentStart + RENT_EDIT_RETYPE_AT;
   const rentRecalcStart = rentStart + RENT_RECALC_AT;
 
@@ -580,7 +580,7 @@ export const DashboardPage: React.FC = () => {
   // ── Food scene ───────────────────────────────────────────
   const foodStart = SCENES.food.start;
   const foodEraseStart = foodStart + FOOD_EDIT_ERASE_AT;
-  const foodEraseDuration = 25;
+  const foodEraseDuration = 18;
   const foodRetypeStart = foodStart + FOOD_EDIT_RETYPE_AT;
   const foodRecalcStart = foodStart + FOOD_RECALC_AT;
 
