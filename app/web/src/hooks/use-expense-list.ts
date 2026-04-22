@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
-import type { Doc, Id } from "../../convex/_generated/dataModel";
+import { api } from "@backend/_generated/api";
+import type { Doc, Id } from "@backend/_generated/dataModel";
 
 const DEFAULT_SESSION_ID = "default";
 

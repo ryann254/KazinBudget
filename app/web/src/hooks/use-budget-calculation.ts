@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useConvex, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "@backend/_generated/api";
 import {
   createBudgetFingerprint,
   type BudgetFingerprintInput,

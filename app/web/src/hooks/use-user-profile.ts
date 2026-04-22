@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { api } from "@backend/_generated/api";
 import type { BudgetInputData } from "@kazibudget/shared/schemas/budget-input";
 
 export type ProfilePatch = Partial<BudgetInputData>;
