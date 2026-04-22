@@ -16,10 +16,10 @@ import { createBudgetFingerprint } from '@kazibudget/shared/lib/budget-fingerpri
 import { projectAll } from '@kazibudget/shared/lib/projections'
 import { compareSalary } from '@kazibudget/shared/lib/salary-comparison'
 import {
-  estimateCommute,
   estimateFood,
   estimateRent,
 } from '@kazibudget/shared/lib/area-estimates'
+import { useCommuteEstimate } from '@/hooks/use-commute-estimate'
 import { useBudgetForm } from '@/hooks/use-budget-form'
 import { useBudgetCalculation } from '@/hooks/use-budget-calculation'
 import { useDebouncedRecalc } from '@/hooks/use-debounced-recalc'
@@ -229,10 +229,23 @@ export default function App() {
     [fingerprintInput.grossSalary, values.jobTitle, values.experienceYears, values.workLocation],
   )
 
-  const liveCommute = useMemo(
-    () => estimateCommute(values.homeArea ?? '', values.workLocation ?? ''),
-    [values.homeArea, values.workLocation],
+  const liveCommute = useCommuteEstimate(
+    values.homeArea ?? '',
+    values.workLocation ?? '',
   )
+
+  const setTransportToMode = async (mode: { mode: string; monthly: number }) => {
+    const name = `Transport (${mode.mode})`
+    const amount = mode.monthly
+    const existing = expenseList.items.find(
+      (i) => i.category === 'transport' || /transport|commute/i.test(i.name),
+    )
+    if (existing) {
+      await expenseList.update(existing.id, { name, amount })
+    } else {
+      await expenseList.add({ name, amount, category: 'transport' })
+    }
+  }
 
   const liveRent = useMemo(
     () => estimateRent(values.homeArea ?? ''),
@@ -471,19 +484,36 @@ export default function App() {
               style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.yellow, fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.15em' }}>
               {liveCommute.distance}
             </span>
+            {liveCommute.source === 'maps' && liveCommute.durationMin !== null && (
+              <span className="text-xs font-bold" style={{ color: COLORS.muted, fontFamily: "'Work Sans', sans-serif" }}>
+                ~{liveCommute.durationMin} min · Google Maps
+              </span>
+            )}
           </div>
+          {liveCommute.distanceKm > 0 && (
+            <div className="mb-4 text-xs font-bold uppercase" style={{ color: COLORS.muted, letterSpacing: '0.1em', fontFamily: "'Work Sans', sans-serif" }}>
+              — Click a mode to set it as your monthly transport expense
+            </div>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {liveCommute.modes.map((mode, i) => {
               const topBorderColors = [COLORS.red, COLORS.blue, COLORS.yellow, COLORS.teal]
+              const disabled = liveCommute.distanceKm === 0
               return (
-                <div
+                <button
+                  type="button"
                   key={mode.mode}
-                  className="p-4"
+                  onClick={() => { if (!disabled) void setTransportToMode(mode) }}
+                  disabled={disabled}
                   onMouseEnter={() => setHoveredCard(`travel-${i}`)}
                   onMouseLeave={() => setHoveredCard(null)}
+                  aria-label={`Set monthly transport expense to ${mode.mode} — ${formatKES(mode.monthly)}`}
+                  className="p-4 text-left"
                   style={{
                     ...cardStyle(`travel-${i}`, COLORS.white),
                     borderTop: `3px solid ${topBorderColors[i % topBorderColors.length]}`,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    opacity: disabled ? 0.5 : 1,
                   }}
                 >
                   <div className="text-xs font-extrabold uppercase" style={{ fontFamily: "'Work Sans', sans-serif", letterSpacing: '0.15em', color: COLORS.black }}>
@@ -493,7 +523,7 @@ export default function App() {
                     {formatKES(mode.monthly)}/mo
                   </div>
                   <div className="text-xs mt-1" style={{ color: COLORS.muted }}>{formatKES(mode.costPerTrip)}/trip</div>
-                </div>
+                </button>
               )
             })}
           </div>

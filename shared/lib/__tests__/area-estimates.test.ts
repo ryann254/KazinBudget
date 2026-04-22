@@ -84,4 +84,19 @@ describe("estimateCommute", () => {
     expect(c.distanceKm).toBeGreaterThanOrEqual(3);
     expect(c.modes).toHaveLength(4);
   });
+
+  it("returns 0km and zero costs when origin equals destination", () => {
+    const c = estimateCommute("Westlands", "Westlands");
+    expect(c.distanceKm).toBe(0);
+    expect(c.distance).toBe("0 km");
+    for (const m of c.modes) {
+      expect(m.costPerTrip).toBe(0);
+      expect(m.monthly).toBe(0);
+    }
+  });
+
+  it("treats 'Juja, Kiambu' vs 'Juja' as the same area", () => {
+    const c = estimateCommute("Juja, Kiambu", "Juja");
+    expect(c.distanceKm).toBe(0);
+  });
 });

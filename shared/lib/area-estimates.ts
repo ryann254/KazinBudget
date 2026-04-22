@@ -198,6 +198,10 @@ function lookupDistanceFromCBD(area: string): number | null {
   }
 }
 
+function normaliseForCompare(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 export function estimateCommute(
   homeArea: string,
   workLocation: string,
@@ -209,21 +213,31 @@ export function estimateCommute(
   const origin = originMatch?.area.name ?? originPrimary;
   const destination = destMatch?.area.name ?? destPrimary;
 
-  const originKm = lookupDistanceFromCBD(homeArea) ?? DEFAULT_DISTANCE_KM;
-  const destKm = lookupDistanceFromCBD(workLocation) ?? DEFAULT_DISTANCE_KM;
-  const distanceKm =
-    origin.toLowerCase() === destination.toLowerCase()
-      ? Math.max(3, Math.min(originKm, destKm))
-      : Math.max(
-          3,
-          Math.round(
-            Math.abs(originKm - destKm) + Math.min(originKm, destKm) * 0.6,
-          ),
-        );
+  const sameArea =
+    normaliseForCompare(homeArea) === normaliseForCompare(workLocation) ||
+    (originMatch !== null &&
+      destMatch !== null &&
+      originMatch.area.name === destMatch.area.name);
+
+  let distanceKm: number;
+  if (sameArea) {
+    distanceKm = 0;
+  } else {
+    const originKm = lookupDistanceFromCBD(homeArea) ?? DEFAULT_DISTANCE_KM;
+    const destKm = lookupDistanceFromCBD(workLocation) ?? DEFAULT_DISTANCE_KM;
+    distanceKm = Math.max(
+      3,
+      Math.round(
+        Math.abs(originKm - destKm) + Math.min(originKm, destKm) * 0.6,
+      ),
+    );
+  }
 
   const round50 = (value: number) => Math.max(0, Math.round(value / 50) * 50);
-  const tripCost = (perKm: number, min: number) =>
-    round50(Math.max(min, perKm * distanceKm));
+  const tripCost = (perKm: number, min: number) => {
+    if (distanceKm === 0) return 0;
+    return round50(Math.max(min, perKm * distanceKm));
+  };
 
   const matatu = tripCost(RATES.matatuPerKm, RATES.matatuMin);
   const boda = tripCost(RATES.bodaPerKm, RATES.bodaMin);
