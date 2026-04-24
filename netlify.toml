@@ -1,6 +1,25 @@
-# Netlify build config.
-# Build command and publish dir are configured in the Netlify UI; this file
-# only adjusts secret scanning for Vite-inlined public env vars.
+# Netlify build config for KaziNBudget.
+
+[build]
+  # Canonical Convex + Netlify pattern. `convex deploy` does two things:
+  #   1. Runs codegen, producing app/backend/_generated/* (gitignored, so
+  #      it doesn't exist on CI by default). Without this, `tsc -b` fails
+  #      because web/src/hooks/*.ts import from @backend/_generated/api.
+  #   2. Deploys Convex functions to the production deployment, keeping
+  #      backend + frontend atomically in sync on every Netlify release.
+  #
+  # One-time Netlify setup: add CONVEX_DEPLOY_KEY (from the Convex dashboard
+  # → Settings → Deploy Keys) to Site settings → Environment variables.
+  #
+  # If you'd rather NOT redeploy Convex on every Netlify build (e.g. you
+  # want to deploy backend manually), swap the command for:
+  #   cd app/backend && npx convex codegen && cd ../../app/web && pnpm run build
+  # codegen-only doesn't need CONVEX_DEPLOY_KEY.
+  command = "cd app/backend && npx convex deploy --cmd 'cd ../../app/web && pnpm run build'"
+
+  # Post-refactor path (web/ → app/web/). The UI still had the old web/dist
+  # from before the move; this overrides it.
+  publish = "app/web/dist"
 
 [build.environment]
   # These VITE_* vars are inlined into the client bundle by design (Vite
