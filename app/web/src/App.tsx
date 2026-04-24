@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
+  CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, ReferenceLine
 } from 'recharts'
-import { useUser, UserButton } from "@clerk/clerk-react"
+import { useUser, UserButton, SignInButton } from "@clerk/clerk-react"
+import { Authenticated, Unauthenticated } from "convex/react"
 import {
   userData, formatKES, growthAssumptions
 } from './data/dummy'
@@ -36,6 +37,7 @@ import { useFormAutosave } from '@/hooks/use-form-autosave'
 import { ValidatedField } from '@/components/input/validated-field'
 import { ExpenseRow } from '@/components/expenses/expense-row'
 import { AddExpenseRow } from '@/components/expenses/add-expense-row'
+import { LoginPromptDialog } from '@/components/auth/login-prompt-dialog'
 
 type TabKey = 'input' | 'dashboard' | 'growth' | 'comparison'
 
@@ -151,11 +153,21 @@ function OrderedChartTooltip({ active, payload, label }: ChartTooltipProps) {
   )
 }
 
+const tabLabelFor = (tab: TabKey): string => {
+  switch (tab) {
+    case 'dashboard': return 'Dashboard'
+    case 'growth': return 'Growth'
+    case 'comparison': return 'Compare'
+    default: return 'Input'
+  }
+}
+
 export default function App() {
-  const { user } = useUser()
+  const { user, isSignedIn } = useUser()
   const [activeTab, setActiveTab] = useState<TabKey>('input')
   const [hoveredCard, setHoveredCard] = useState<string | null>(null)
   const [showNavScroll, setShowNavScroll] = useState(true)
+  const [loginPromptFeature, setLoginPromptFeature] = useState<string | null>(null)
   const fullName = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim()
   const userDisplayName =
     fullName || user?.primaryEmailAddress?.emailAddress || userData.name
@@ -355,8 +367,26 @@ export default function App() {
     }
     await calculate(fingerprintInput)
     setHasCalculated(true)
+    if (!isSignedIn) {
+      setLoginPromptFeature(tabLabelFor('dashboard'))
+      return
+    }
     setActiveTab('dashboard')
   }
+
+  const handleTabClick = (next: TabKey) => {
+    if (next !== 'input' && !isSignedIn) {
+      setLoginPromptFeature(tabLabelFor(next))
+      return
+    }
+    setActiveTab(next)
+  }
+
+  // Force unauth users to the Input tab — prevents stranding a user on
+  // Dashboard / Growth / Compare after they sign out. Derived during render
+  // so we don't cascade renders from an effect.
+  const effectiveTab: TabKey =
+    isSignedIn === false && activeTab !== 'input' ? 'input' : activeTab
 
   const cardStyle = (id: string, bg: string = COLORS.white) => ({
     ...((hoveredCard === id) ? brutalistCardHover : brutalistCard),
@@ -1119,6 +1149,24 @@ export default function App() {
                 tick={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 700, fontSize: 11 }}
                 stroke={COLORS.black}
               />
+              {liveComparison.userSalary > 0 && (
+                <ReferenceLine
+                  x={liveComparison.userSalary}
+                  stroke={COLORS.blue}
+                  strokeWidth={3}
+                  strokeDasharray="4 4"
+                  label={{
+                    value: `YOU · ${formatKES(liveComparison.userSalary)}`,
+                    position: 'top',
+                    fill: COLORS.blue,
+                    fontFamily: "'Work Sans', sans-serif",
+                    fontWeight: 900,
+                    fontSize: 12,
+                    letterSpacing: '0.1em',
+                  }}
+                  ifOverflow="extendDomain"
+                />
+              )}
               <Tooltip
                 formatter={(val: number) => val}
                 labelFormatter={(l) => formatKES(Number(l))}
@@ -1130,10 +1178,6 @@ export default function App() {
               <Area
                 type="monotone" dataKey="frequency" stroke={COLORS.black} strokeWidth={3}
                 fill="url(#bellGradient)" name="Frequency"
-              />
-              {/* User salary reference line */}
-              <Area
-                type="monotone" dataKey={() => null} stroke="none" fill="none"
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -1353,7 +1397,29 @@ export default function App() {
               <User size={12} />
               {values.fullName || userDisplayName} &mdash; {values.jobTitle || userCompany}
             </div>
-            <UserButton />
+            <Authenticated>
+              <UserButton />
+            </Authenticated>
+            <Unauthenticated>
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  className="px-4 py-2 text-xs uppercase"
+                  style={{
+                    border: `3px solid ${COLORS.black}`,
+                    boxShadow: `4px 4px 0 ${COLORS.black}`,
+                    backgroundColor: COLORS.yellow,
+                    color: COLORS.black,
+                    fontFamily: "'Work Sans', sans-serif",
+                    fontWeight: 900,
+                    letterSpacing: '0.15em',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Sign in
+                </button>
+              </SignInButton>
+            </Unauthenticated>
           </div>
         </div>
       </header>
@@ -1372,7 +1438,7 @@ export default function App() {
           >
             <div className="max-w-4xl mx-auto flex gap-2">
               {tabs.map((tab) => {
-                const isActive = activeTab === tab.key
+                const isActive = effectiveTab === tab.key
                 const bgMap: Record<TabKey, string> = {
                   input: COLORS.red, dashboard: COLORS.blue,
                   growth: COLORS.yellow, comparison: COLORS.teal,
@@ -1384,7 +1450,7 @@ export default function App() {
                 return (
                   <button
                     key={tab.key}
-                    onClick={() => setActiveTab(tab.key)}
+                    onClick={() => handleTabClick(tab.key)}
                     className="flex items-center gap-2 px-4 py-2 font-extrabold text-xs uppercase whitespace-nowrap"
                     style={{
                       border: `3px solid ${COLORS.black}`,
@@ -1431,10 +1497,10 @@ export default function App() {
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-5 py-8 sm:py-10">
-        {activeTab === 'input' && renderInput()}
-        {activeTab === 'dashboard' && renderDashboard()}
-        {activeTab === 'growth' && renderGrowth()}
-        {activeTab === 'comparison' && renderComparison()}
+        {effectiveTab === 'input' && renderInput()}
+        {effectiveTab === 'dashboard' && renderDashboard()}
+        {effectiveTab === 'growth' && renderGrowth()}
+        {effectiveTab === 'comparison' && renderComparison()}
       </main>
 
       {/* Footer */}
@@ -1465,6 +1531,12 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      <LoginPromptDialog
+        open={loginPromptFeature !== null}
+        onOpenChange={(o) => { if (!o) setLoginPromptFeature(null) }}
+        feature={loginPromptFeature ?? ''}
+      />
     </div>
   )
 }
