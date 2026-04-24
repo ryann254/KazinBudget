@@ -1,21 +1,29 @@
 # Netlify build config for KaziNBudget.
 
 [build]
-  # Canonical Convex + Netlify pattern. `convex deploy` does two things:
-  #   1. Runs codegen, producing app/backend/_generated/* (gitignored, so
-  #      it doesn't exist on CI by default). Without this, `tsc -b` fails
-  #      because web/src/hooks/*.ts import from @backend/_generated/api.
-  #   2. Deploys Convex functions to the production deployment, keeping
-  #      backend + frontend atomically in sync on every Netlify release.
+  # Canonical Convex + Netlify pattern with belt-and-suspenders codegen.
   #
-  # One-time Netlify setup: add CONVEX_DEPLOY_KEY (from the Convex dashboard
-  # → Settings → Deploy Keys) to Site settings → Environment variables.
+  # Why the explicit `convex codegen` before `convex deploy`:
+  #   app/backend/_generated/ is gitignored. On CI it starts empty. The web
+  #   build (`tsc -b`) imports @backend/_generated/api from 6+ files, so
+  #   those types must exist before `pnpm run build` runs. Relying on
+  #   `convex deploy --cmd` alone was observed to skip codegen on some
+  #   convex CLI versions, so we run codegen explicitly first.
   #
-  # If you'd rather NOT redeploy Convex on every Netlify build (e.g. you
-  # want to deploy backend manually), swap the command for:
-  #   cd app/backend && npx convex codegen && cd ../../app/web && pnpm run build
-  # codegen-only doesn't need CONVEX_DEPLOY_KEY.
-  command = "cd app/backend && npx convex deploy --cmd 'cd ../../app/web && pnpm run build'"
+  # Why `pnpm exec convex` instead of `npx convex`:
+  #   pnpm exec uses the version pinned in app/backend/package.json
+  #   (^1.21.0) rather than pulling the latest tag off npm. Avoids CLI
+  #   behavior drift between builds.
+  #
+  # `convex deploy --cmd '<frontend build>'` then:
+  #   - runs the frontend build with VITE_CONVEX_URL set to the deploy URL
+  #   - deploys Convex functions to production atomically with the release
+  #
+  # One-time Netlify setup: add CONVEX_DEPLOY_KEY (Convex dashboard →
+  # Settings → Deploy Keys → Production) to Site settings → Environment
+  # variables. That key IS a real secret — do not add it to
+  # SECRETS_SCAN_OMIT_KEYS.
+  command = "cd app/backend && pnpm exec convex codegen && pnpm exec convex deploy --cmd 'cd ../../app/web && pnpm run build'"
 
   # Post-refactor path (web/ → app/web/). The UI still had the old web/dist
   # from before the move; this overrides it.
