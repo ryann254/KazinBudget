@@ -1,0 +1,16 @@
+# Netlify build config.
+# Build command and publish dir are configured in the Netlify UI; this file
+# only adjusts secret scanning for Vite-inlined public env vars.
+
+[build.environment]
+  # These VITE_* vars are inlined into the client bundle by design (Vite
+  # exposes them to the browser). Each is the PUBLIC / publishable variant of
+  # its service and is safe to ship:
+  #   - VITE_CLERK_PUBLISHABLE_KEY  — Clerk's client-safe key (pk_*)
+  #   - VITE_CONVEX_URL             — Public Convex deployment URL
+  #   - VITE_CONVEX_SITE_URL        — Public Convex HTTP actions base URL
+  #   - VITE_GOOGLE_MAPS_API_KEY    — Public Maps key, secured by HTTP
+  #                                   referrer restrictions in GCP
+  # NEVER add a secret key (sk_*, service-role tokens, Convex deploy keys,
+  # etc.) to this list — the scanner's job is to catch those.
+  SECRETS_SCAN_OMIT_KEYS = "VITE_CLERK_PUBLISHABLE_KEY,VITE_CONVEX_URL,VITE_CONVEX_SITE_URL,VITE_GOOGLE_MAPS_API_KEY"
