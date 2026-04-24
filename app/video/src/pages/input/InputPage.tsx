@@ -5,6 +5,7 @@ import {
   useCurrentFrame,
 } from "remotion";
 import { brutalistCard, COLORS, fontFamily, formatKES } from "../../theme";
+import { BrandTitle } from "../../components/BrandTitle";
 import {
   countUp,
   easeOutExpo,
@@ -1160,21 +1161,10 @@ export const InputPage: React.FC = () => {
             flexDirection: "column",
           }}
         >
-          <div style={{ fontSize: 96, fontWeight: 900, color: COLORS.white }}>
-            KAZI<span style={{ color: COLORS.red }}>&amp;BUDGET</span>
-          </div>
-          <div
-            style={{
-              marginTop: 20,
-              fontSize: 22,
-              fontWeight: 700,
-              letterSpacing: "0.35em",
-              textTransform: "uppercase",
-              color: COLORS.yellow,
-            }}
-          >
-            Input Page Walkthrough
-          </div>
+          <BrandTitle
+            frame={frame}
+            tagline="Prepare for your new job with the right tools"
+          />
         </AbsoluteFill>
       ) : null}
 

@@ -9,8 +9,14 @@ import {
 } from './data/dummy'
 import {
   Home, User, BarChart3, TrendingUp, Users,
-  Zap, Star, AlertTriangle, ThumbsUp, ChevronRight
+  Zap, Star, AlertTriangle, ThumbsUp, ChevronRight, Info
 } from 'lucide-react'
+import {
+  Tooltip as UITooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '@/components/ui/tooltip'
 import { calculateKenyanDeductions } from '@kazibudget/shared/lib/kenya-tax-calculator'
 import { createBudgetFingerprint } from '@kazibudget/shared/lib/budget-fingerprint'
 import { projectAll } from '@kazibudget/shared/lib/projections'
@@ -62,6 +68,87 @@ const brutalistCardHover = {
   border: `3px solid ${COLORS.black}`,
   boxShadow: `6px 6px 0 ${COLORS.black}`,
   transform: 'translate(-2px, -2px)',
+}
+
+type ChartTooltipPayloadEntry = {
+  value?: number | string
+  name?: string
+  color?: string
+  stroke?: string
+  fill?: string
+  dataKey?: string
+}
+
+type ChartTooltipProps = {
+  active?: boolean
+  payload?: ChartTooltipPayloadEntry[]
+  label?: string | number
+}
+
+function OrderedChartTooltip({ active, payload, label }: ChartTooltipProps) {
+  if (!active || !payload || payload.length === 0) return null
+  const rows = payload
+    .map((p) => ({
+      name: p.name ?? String(p.dataKey ?? ''),
+      numeric: typeof p.value === 'number' ? p.value : Number(p.value ?? 0),
+      color: p.color ?? p.stroke ?? p.fill ?? COLORS.black,
+    }))
+    .sort((a, b) => b.numeric - a.numeric)
+  return (
+    <div
+      style={{
+        backgroundColor: COLORS.white,
+        border: `2px solid ${COLORS.black}`,
+        boxShadow: `3px 3px 0 ${COLORS.black}`,
+        padding: '10px 12px',
+        fontFamily: "'Work Sans', sans-serif",
+        fontWeight: 700,
+        minWidth: 180,
+      }}
+    >
+      <div
+        style={{
+          color: COLORS.black,
+          fontWeight: 900,
+          letterSpacing: '0.12em',
+          fontSize: 13,
+          marginBottom: 6,
+          borderBottom: `1px solid ${COLORS.black}`,
+          paddingBottom: 4,
+          textTransform: 'uppercase',
+        }}
+      >
+        Year {label}
+      </div>
+      {rows.map((r) => (
+        <div
+          key={r.name}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 13,
+            fontWeight: 800,
+            color: r.color,
+            lineHeight: 1.5,
+          }}
+        >
+          <span
+            style={{
+              display: 'inline-block',
+              width: 10,
+              height: 10,
+              backgroundColor: r.color,
+              border: `1.5px solid ${COLORS.black}`,
+            }}
+          />
+          <span>
+            {r.name}: {formatKES(r.numeric)}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export default function App() {
@@ -861,14 +948,7 @@ export default function App() {
               tick={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 700, fontSize: 11 }}
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} stroke={COLORS.black}
             />
-            <Tooltip
-              formatter={(val: number) => formatKES(val)}
-              labelFormatter={(l) => `Year ${l}`}
-              contentStyle={{
-                border: `2px solid ${COLORS.black}`, borderRadius: 0,
-                fontFamily: "'Work Sans', sans-serif", fontWeight: 700,
-              }}
-            />
+            <Tooltip content={<OrderedChartTooltip />} />
             <Area type="monotone" dataKey="salary" stroke={COLORS.black} strokeWidth={3}
               fill={COLORS.yellow} fillOpacity={0.7} name="Salary" />
             <Area type="monotone" dataKey="takeHome" stroke={COLORS.black} strokeWidth={2}
@@ -963,14 +1043,7 @@ export default function App() {
               tick={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 700, fontSize: 11 }}
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} stroke={COLORS.black}
             />
-            <Tooltip
-              formatter={(val: number) => formatKES(val)}
-              labelFormatter={(l) => `Year ${l}`}
-              contentStyle={{
-                border: `2px solid ${COLORS.black}`, borderRadius: 0,
-                fontFamily: "'Work Sans', sans-serif", fontWeight: 700,
-              }}
-            />
+            <Tooltip content={<OrderedChartTooltip />} />
             <Line type="monotone" dataKey="takeHome" stroke={COLORS.teal} strokeWidth={4}
               dot={{ r: 5, stroke: COLORS.black, strokeWidth: 2, fill: COLORS.teal }} name="Take Home" />
             <Line type="monotone" dataKey="taxes" stroke={COLORS.red} strokeWidth={4}
@@ -1184,26 +1257,64 @@ export default function App() {
             <span style={{ color: COLORS.muted, fontFamily: "'Work Sans', sans-serif", fontSize: '0.75rem', letterSpacing: '0.15em', fontWeight: 800 }}>— </span>
             <span className="text-lg font-bold" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.black }}>Gap Analysis</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
-              <div className="text-xs font-bold uppercase mb-1" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>Monthly Gap</div>
-              <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.red }}>
-                {formatKES(liveComparison.marketMedian - liveComparison.userSalary)}
+          <TooltipProvider>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
+                <div className="text-xs font-bold uppercase mb-1 flex items-center justify-center gap-1.5" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>
+                  <span>Monthly Gap</span>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <span style={{ display: 'inline-flex', cursor: 'help' }}>
+                        <Info size={14} strokeWidth={2.5} color={COLORS.muted} style={{ cursor: 'help' }} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Difference between your current salary and the market median for your role, experience, and location.
+                    </TooltipContent>
+                  </UITooltip>
+                </div>
+                <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.red }}>
+                  {formatKES(liveComparison.marketMedian - liveComparison.userSalary)}
+                </div>
+              </div>
+              <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
+                <div className="text-xs font-bold uppercase mb-1 flex items-center justify-center gap-1.5" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>
+                  <span>Annual Gap</span>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <span style={{ display: 'inline-flex', cursor: 'help' }}>
+                        <Info size={14} strokeWidth={2.5} color={COLORS.muted} style={{ cursor: 'help' }} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Monthly gap multiplied by 12 — what you&apos;re leaving on the table over a year.
+                    </TooltipContent>
+                  </UITooltip>
+                </div>
+                <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.red }}>
+                  {formatKES((liveComparison.marketMedian - liveComparison.userSalary) * 12)}
+                </div>
+              </div>
+              <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
+                <div className="text-xs font-bold uppercase mb-1 flex items-center justify-center gap-1.5" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>
+                  <span>To Reach P75</span>
+                  <UITooltip>
+                    <TooltipTrigger asChild>
+                      <span style={{ display: 'inline-flex', cursor: 'help' }}>
+                        <Info size={14} strokeWidth={2.5} color={COLORS.muted} style={{ cursor: 'help' }} />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Extra monthly salary you&apos;d need to match the top 25% (75th percentile) of earners in this segment.
+                    </TooltipContent>
+                  </UITooltip>
+                </div>
+                <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.blue }}>
+                  {formatKES(liveComparison.p75 - liveComparison.userSalary)}
+                </div>
               </div>
             </div>
-            <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
-              <div className="text-xs font-bold uppercase mb-1" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>Annual Gap</div>
-              <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.red }}>
-                {formatKES((liveComparison.marketMedian - liveComparison.userSalary) * 12)}
-              </div>
-            </div>
-            <div className="p-5 text-center" style={{ border: `2px solid ${COLORS.black}`, backgroundColor: COLORS.white }}>
-              <div className="text-xs font-bold uppercase mb-1" style={{ color: COLORS.muted, letterSpacing: '0.05em' }}>To Reach P75</div>
-              <div className="text-lg font-black" style={{ fontFamily: "'Work Sans', sans-serif", fontWeight: 900, color: COLORS.blue }}>
-                {formatKES(liveComparison.p75 - liveComparison.userSalary)}
-              </div>
-            </div>
-          </div>
+          </TooltipProvider>
         </div>
       </div>
     )
