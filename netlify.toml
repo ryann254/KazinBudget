@@ -23,13 +23,19 @@
   # Settings → Deploy Keys → Production) to Site settings → Environment
   # variables. That key IS a real secret — do not add it to
   # SECRETS_SCAN_OMIT_KEYS.
-  command = "cd app/backend && pnpm exec convex codegen && pnpm exec convex deploy --cmd 'cd ../../app/web && pnpm run build'"
+  command = "mkdir -p $CONVEX_TMPDIR && cd app/backend && pnpm exec convex codegen && pnpm exec convex deploy --cmd 'cd ../../app/web && pnpm run build'"
 
   # Post-refactor path (web/ → app/web/). The UI still had the old web/dist
   # from before the move; this overrides it.
   publish = "app/web/dist"
 
 [build.environment]
+  # Netlify's /tmp lives on a different filesystem than /opt/build/repo,
+  # which triggers a noisy warning from convex codegen. Point Convex's
+  # temp dir at a folder inside the build root so both paths share a
+  # filesystem. The build command `mkdir -p`s this before running anything.
+  CONVEX_TMPDIR = "/opt/build/repo/.convex-tmp"
+
   # These VITE_* vars are inlined into the client bundle by design (Vite
   # exposes them to the browser). Each is the PUBLIC / publishable variant of
   # its service and is safe to ship:
