@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @kazibudget/web dev",
-    "dev:convex": "pnpm --filter @kazibudget/web dev:convex",
+    "dev": "pnpm -r --parallel --aggregate-output dev",
+    "dev:web": "pnpm --filter @kazibudget/web dev",
+    "dev:backend": "pnpm --filter @kazibudget/backend dev",
     "build": "pnpm --filter @kazibudget/web build",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",

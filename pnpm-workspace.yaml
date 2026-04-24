@@ -1,4 +1,4 @@
 packages:
   - "shared"
-  - "web"
-  - "convex"
+  - "app/web"
+  - "app/backend"
